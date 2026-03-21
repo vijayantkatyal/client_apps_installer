@@ -1,0 +1,52 @@
+# Universal Installer Gitignore
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and Runtime Files
+*.log
+storage/temp/*
+storage/backups/*
+storage/license/*
+!storage/temp/.gitkeep
+!storage/backups/.gitkeep
+!storage/license/.gitkeep
+
+# User uploads and temporary files
+*.tmp
+*.temp
+cache/
+uploads/
+
+# Environment files (if any)
+.env
+.env.local
+.env.production
+
+# Backup files
+*.bak
+*.backup
+
+# Test files
+test_*
+debug_*
+
+# Keep directory structure
+!.gitkeep
+!storage/
+!storage/temp/
+!storage/backups/
+!storage/license/

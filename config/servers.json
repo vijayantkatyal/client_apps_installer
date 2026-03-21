@@ -1,0 +1,31 @@
+{
+  "license_servers": {
+    "vidpowr": "http://localhost:9000",
+    "blogpro": "http://localhost:9000", 
+    "shoplite": "http://localhost:9000"
+  },
+  "release_servers": {
+    "vidpowr": "http://localhost:9001",
+    "blogpro": "http://localhost:9001",
+    "shoplite": "http://localhost:9001"
+  },
+  "endpoints": {
+    "validate_license": "/api/validate",
+    "get_download_token": "/api/download/token",
+    "get_download_url": "/api/download/url",
+    "list_versions": "/api/versions",
+    "check_updates": "/api/updates/check",
+    "get_update_url": "/api/updates/download"
+  },
+  "security": {
+    "token_expiry": 3600,
+    "max_download_size": "500MB",
+    "allowed_protocols": ["http", "https"],
+    "verify_ssl": false
+  },
+  "fallback": {
+    "timeout": 30,
+    "retry_attempts": 3,
+    "retry_delay": 5
+  }
+}

@@ -1,0 +1,48 @@
+# Docker ignore file
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+DEPLOYMENT.md
+*.md
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Test files
+test_*
+debug_*
+
+# Temporary files
+storage/temp/*
+storage/backups/*
+storage/license/*
+!storage/temp/.gitkeep
+!storage/backups/.gitkeep
+!storage/license/.gitkeep
+
+# Docker files (avoid recursive builds)
+Dockerfile
+docker-compose.yml
+.dockerignore
+mock-server/
+
+# Keep important directories
+!client_apps_installer/
+!client_apps_installer/**/*
