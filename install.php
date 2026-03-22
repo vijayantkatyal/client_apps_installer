@@ -32,7 +32,7 @@ require_once __DIR__ . '/core/DatabaseSetup.php';
 require_once __DIR__ . '/core/InstallationProcess.php';
 
 $installer = new UniversalInstaller();
-$step = $_GET['step'] ?? 'app_selection';
+$step = $_GET['step'] ?? 'license';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -43,7 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
             
         case 'validate_license':
-            $installer->validateLicense($_POST['license_key'] ?? '');
+            $result = $installer->validateLicense($_POST['license_key'] ?? '');
+            if ($result['success']) {
+                header('Location: install.php?step=app_selection');
+                exit;
+            }
             break;
             
         case 'setup_database':
@@ -94,6 +98,6 @@ switch ($step) {
         $installer->showComplete();
         break;
     default:
-        $installer->showAppSelection();
+        $installer->showLicenseValidation();
 }
 ?>

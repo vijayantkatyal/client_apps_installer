@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VidPowr Installer</title>
+    <title>Universal App Installer</title>
     <style>
         * {
             margin: 0;
@@ -66,22 +66,80 @@
             transition: all 0.3s ease;
         }
 
-        .progress-step.active {
-            color: #667eea;
-            background: #f0f4ff;
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
 
-        .progress-step.completed {
+        .step-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
+
+        .progress-step.active .step-badge {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .progress-step.active .step-label {
+            color: #667eea;
+        }
+
+        .progress-step.completed .step-badge {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .progress-step.completed .step-label {
             color: #28a745;
-            background: #f0fff4;
+        }
+
+        .step-number-text {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .step-checkmark {
+            font-size: 18px;
+            font-weight: bold;
+            animation: checkmarkFadeIn 0.3s ease-out;
+        }
+
+        @keyframes checkmarkFadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .progress-step::before {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
+            top: 40%;
+            left: -99px;
+            right: 90px;
             height: 2px;
             background: #e9ecef;
             z-index: 1;
@@ -98,29 +156,6 @@
 
         .progress-step.completed::before {
             background: #28a745;
-        }
-
-        .step-number {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            border-radius: 50%;
-            background: #e9ecef;
-            color: #6c757d;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .progress-step.active .step-number {
-            background: #667eea;
-            color: white;
-        }
-
-        .progress-step.completed .step-number {
-            background: #28a745;
-            color: white;
         }
 
         .content {
@@ -323,26 +358,60 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>VidPowr</h1>
-            <p>Video Player Application Installer</p>
+            <h1>Universal App Installer</h1>
+            <p>Install VidPowr, FeedPlay, VidChapter, or VidTags</p>
         </div>
         
         <div class="progress-bar">
             <div class="progress-step <?php echo $currentStep >= 1 ? ($currentStep > 1 ? 'completed' : 'active') : ''; ?>">
-                <div class="step-number">1</div>
-                System Check
+                <div class="step-badge">
+                    <?php if ($currentStep > 1): ?>
+                        <span class="step-checkmark">✓</span>
+                    <?php else: ?>
+                        <span class="step-number-text">1</span>
+                    <?php endif; ?>
+                </div>
+                <div class="step-label">License</div>
             </div>
             <div class="progress-step <?php echo $currentStep >= 2 ? ($currentStep > 2 ? 'completed' : 'active') : ''; ?>">
-                <div class="step-number">2</div>
-                License
+                <div class="step-badge">
+                    <?php if ($currentStep > 2): ?>
+                        <span class="step-checkmark">✓</span>
+                    <?php else: ?>
+                        <span class="step-number-text">2</span>
+                    <?php endif; ?>
+                </div>
+                <div class="step-label">App Selection</div>
             </div>
             <div class="progress-step <?php echo $currentStep >= 3 ? ($currentStep > 3 ? 'completed' : 'active') : ''; ?>">
-                <div class="step-number">3</div>
-                Database
+                <div class="step-badge">
+                    <?php if ($currentStep > 3): ?>
+                        <span class="step-checkmark">✓</span>
+                    <?php else: ?>
+                        <span class="step-number-text">3</span>
+                    <?php endif; ?>
+                </div>
+                <div class="step-label">System Check</div>
             </div>
             <div class="progress-step <?php echo $currentStep >= 4 ? ($currentStep > 4 ? 'completed' : 'active') : ''; ?>">
-                <div class="step-number">4</div>
-                Install
+                <div class="step-badge">
+                    <?php if ($currentStep > 4): ?>
+                        <span class="step-checkmark">✓</span>
+                    <?php else: ?>
+                        <span class="step-number-text">4</span>
+                    <?php endif; ?>
+                </div>
+                <div class="step-label">Database</div>
+            </div>
+            <div class="progress-step <?php echo $currentStep >= 5 ? ($currentStep > 5 ? 'completed' : 'active') : ''; ?>">
+                <div class="step-badge">
+                    <?php if ($currentStep > 5): ?>
+                        <span class="step-checkmark">✓</span>
+                    <?php else: ?>
+                        <span class="step-number-text">5</span>
+                    <?php endif; ?>
+                </div>
+                <div class="step-label">Install</div>
             </div>
         </div>
         

@@ -50,6 +50,12 @@ class UniversalInstaller
 
     public function showAppSelection()
     {
+        // Check if license is validated
+        if (!isset($_SESSION['license_validated']) || !$_SESSION['license_validated']) {
+            header('Location: install.php?step=license');
+            exit;
+        }
+        
         $apps = $this->getAvailableApps();
         include $this->basePath . 'views/app_selection.php';
     }
@@ -68,7 +74,28 @@ class UniversalInstaller
 
     public function getAvailableApps()
     {
-        return $this->appsConfig ?? [];
+        $allApps = $this->appsConfig ?? [];
+        
+        // If no license is validated, return empty array
+        if (!isset($_SESSION['license_validated']) || !$_SESSION['license_validated']) {
+            return [];
+        }
+        
+        $licenseData = $_SESSION['license_data'] ?? [];
+        $licenseType = $licenseData['type'] ?? 'normal';
+        $licenseFeatures = $licenseData['features'] ?? [];
+        
+        $availableApps = [];
+        
+        foreach ($allApps as $appId => $app) {
+            // Check if app supports the license type
+            if (isset($app['features'][$licenseType])) {
+                $availableApps[$appId] = $app;
+                $availableApps[$appId]['available_features'] = $app['features'][$licenseType];
+            }
+        }
+        
+        return $availableApps;
     }
 
     public function getCurrentApp()
@@ -105,39 +132,29 @@ class UniversalInstaller
 
     public function showLicenseValidation()
     {
-        $app = $this->getCurrentApp();
-        if (!$app) {
-            header('Location: install.php?step=app_selection');
-            exit;
-        }
+        $licenseValidator = new LicenseValidator();
+        $storedLicense = $licenseValidator->getStoredLicense();
+        $licenseError = $_SESSION['license_error'] ?? null;
+        
+        // Clear the error after displaying it
+        unset($_SESSION['license_error']);
 
-        $licenseValidator = new LicenseValidator($app['license_server']);
-        $storedLicense = $licenseValidator->getStoredLicense($this->currentApp);
-
-        include $this->basePath . 'views/step2-license.php';
+        include $this->basePath . 'views/license_validation.php';
     }
 
     public function validateLicense($licenseKey)
     {
-        $app = $this->getCurrentApp();
-        if (!$app) {
-            return ['success' => false, 'error' => 'No application selected'];
-        }
-
-        $this->licenseKey = $licenseKey;
-        $licenseValidator = new LicenseValidator($app['license_server']);
-        $result = $licenseValidator->validate($licenseKey, $this->currentApp);
+        $licenseValidator = new LicenseValidator();
+        $result = $licenseValidator->validate($licenseKey);
 
         if ($result['success']) {
             $_SESSION['license_validated'] = true;
             $_SESSION['license_data'] = $result['data'];
             $_SESSION['license_key'] = $licenseKey;
-            header('Location: install.php?step=database');
-            exit;
+            return $result;
         } else {
             $_SESSION['license_error'] = $result['error'];
-            header('Location: install.php?step=license');
-            exit;
+            return $result;
         }
     }
 

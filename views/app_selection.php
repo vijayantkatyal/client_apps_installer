@@ -1,4 +1,9 @@
-<?php $currentStep = 0; ?>
+<?php 
+$currentStep = 2; 
+$licenseData = $_SESSION['license_data'] ?? [];
+$licenseType = $licenseData['type'] ?? 'normal';
+$licenseFeatures = $licenseData['features'] ?? [];
+?>
 <?php require 'layout.php'; ?>
 
 <div class="mb-20">
@@ -6,66 +11,129 @@
     <p>Select which application you'd like to install on your server.</p>
 </div>
 
-<div class="apps-grid">
-    <?php foreach ($apps as $appId => $app): ?>
-        <div class="app-card">
-            <div class="app-icon"><?php echo $app['icon']; ?></div>
-            <h3><?php echo htmlspecialchars($app['name']); ?></h3>
-            <p class="app-description"><?php echo htmlspecialchars($app['description']); ?></p>
-            
-            <div class="app-info">
-                <div class="app-version">
-                    <strong>Version:</strong> <?php echo htmlspecialchars($app['version']); ?>
-                </div>
-                <div class="app-requirements">
-                    <strong>Requirements:</strong><br>
-                    PHP <?php echo htmlspecialchars($app['requirements']['php']); ?><br>
-                    <?php echo htmlspecialchars($app['requirements']['database']); ?><br>
-                    <?php echo htmlspecialchars($app['requirements']['memory_limit']); ?> RAM<br>
-                    <?php echo htmlspecialchars($app['requirements']['disk_space']); ?> space
-                </div>
+<?php if ($licenseData): ?>
+    <div class="license-info" style="background: #d1ecf1; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #bee5eb;">
+        <h4 style="color: #0c5460; margin-bottom: 15px;">🔑 Active License Information</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <strong>License Type:</strong> 
+                <span style="text-transform: capitalize; color: #0c5460;"><?php echo htmlspecialchars($licenseType); ?></span>
             </div>
-            
-            <form method="POST" action="install.php">
-                <input type="hidden" name="action" value="select_app">
-                <input type="hidden" name="app" value="<?php echo $appId; ?>">
-                <button type="submit" class="btn btn-primary btn-block">
-                    Install <?php echo htmlspecialchars($app['name']); ?>
-                </button>
-            </form>
+            <div>
+                <strong>License Key:</strong> 
+                <span style="font-family: monospace; color: #0c5460;"><?php echo htmlspecialchars($licenseData['license_key'] ?? ''); ?></span>
+            </div>
+            <?php if ($licenseData['expires']): ?>
+            <div>
+                <strong>Expires:</strong> 
+                <span style="color: #0c5460;"><?php echo htmlspecialchars($licenseData['expires']); ?></span>
+            </div>
+            <?php endif; ?>
         </div>
-    <?php endforeach; ?>
-</div>
+        <?php if (!empty($licenseFeatures)): ?>
+        <div style="margin-top: 15px;">
+            <strong>Available Features:</strong>
+            <div style="margin-top: 8px;">
+                <?php foreach ($licenseFeatures as $feature): ?>
+                    <span style="display: inline-block; background: #0c5460; color: white; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 0.85em;">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature))); ?>
+                    </span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<?php if (empty($apps)): ?>
+    <div class="alert alert-warning" style="background: #fff3cd; color: #856404; padding: 20px; border-radius: 8px; border: 1px solid #ffeaa7; text-align: center;">
+        <h3>⚠️ No Applications Available</h3>
+        <p>There are no applications available for your current license type.</p>
+        <p>Please <a href="install.php?step=license" style="color: #667eea; text-decoration: none;">validate a different license</a> or contact support for assistance.</p>
+    </div>
+<?php else: ?>
+    <div class="apps-grid">
+        <?php foreach ($apps as $appId => $app): ?>
+            <div class="app-card">
+                <div class="app-icon"><?php echo $app['icon']; ?></div>
+                <h3><?php echo htmlspecialchars($app['name']); ?></h3>
+                <p class="app-description"><?php echo htmlspecialchars($app['description']); ?></p>
+                
+                <?php if (isset($app['available_features'])): ?>
+                <div class="app-features" style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <strong>Available Features:</strong>
+                    <div style="margin-top: 8px;">
+                        <?php foreach ($app['available_features'] as $feature): ?>
+                            <span style="display: inline-block; background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; margin: 1px; font-size: 0.75em;">
+                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature))); ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="app-info">
+                    <div class="app-version">
+                        <strong>Version:</strong> <?php echo htmlspecialchars($app['version']); ?>
+                    </div>
+                    <div class="app-requirements">
+                        <strong>Requirements:</strong><br>
+                        PHP <?php echo htmlspecialchars($app['requirements']['php']); ?><br>
+                        <?php echo htmlspecialchars($app['requirements']['database']); ?><br>
+                        <?php echo htmlspecialchars($app['requirements']['memory_limit']); ?> RAM<br>
+                        <?php echo htmlspecialchars($app['requirements']['disk_space']); ?> space
+                    </div>
+                    <?php if (isset($app['website'])): ?>
+                    <div class="app-website" style="margin-top: 10px;">
+                        <strong>Website:</strong> 
+                        <a href="<?php echo htmlspecialchars($app['website']); ?>" target="_blank" style="color: #667eea; text-decoration: none;">
+                            <?php echo htmlspecialchars($app['website']); ?>
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <form method="POST" action="install.php">
+                    <input type="hidden" name="action" value="select_app">
+                    <input type="hidden" name="app" value="<?php echo $appId; ?>">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Install <?php echo htmlspecialchars($app['name']); ?>
+                    </button>
+                </form>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
 
 <div class="mt-40">
     <h3>🔧 Installation Process</h3>
     <div class="process-steps">
         <div class="step">
-            <div class="step-number">1</div>
+            <div class="step-number completed">✓</div>
+            <div class="step-content">
+                <h4>License Validation</h4>
+                <p>Your license key has been validated</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number active">2</div>
+            <div class="step-content">
+                <h4>Application Selection</h4>
+                <p>Choose from applications available for your license type</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
             <div class="step-content">
                 <h4>System Check</h4>
                 <p>We'll verify your server meets all requirements</p>
             </div>
         </div>
         <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <h4>License Validation</h4>
-                <p>Activate your license key for the selected application</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-number">3</div>
+            <div class="step-number">4</div>
             <div class="step-content">
                 <h4>Database Setup</h4>
                 <p>Configure your database connection</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-number">4</div>
-            <div class="step-content">
-                <h4>Remote Download</h4>
-                <p>Securely download the application files</p>
             </div>
         </div>
         <div class="step">
@@ -148,9 +216,19 @@
     gap: 15px;
 }
 
-.step-number {
+.step-number.completed {
+    background: #28a745;
+    color: white;
+}
+
+.step-number.active {
     background: #667eea;
     color: white;
+}
+
+.step-number {
+    background: #e9ecef;
+    color: #6c757d;
     width: 30px;
     height: 30px;
     border-radius: 50%;
