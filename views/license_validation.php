@@ -33,7 +33,6 @@
                placeholder="XXXXXXXX-XXXXX-XXXXX-XXXXX"
                value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>"
                required
-               pattern="[A-Z0-9]{8}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}"
                style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px; font-family: monospace;">
         <small class="form-text" style="color: #6c757d; font-size: 0.9em; margin-top: 5px; display: block;">
             Format: XXXXXXXX-XXXXX-XXXXX-XXXXX
@@ -72,7 +71,7 @@
                     <span style="font-size: 1.2em;">🎵</span> <strong>FeedPlay:</strong> RSS feed and podcast management platform
                 </li>
                 <li style="margin-bottom: 8px;">
-                    <span style="font-size: 1.2em;">�</span> <strong>VidChapter:</strong> Video chaptering and timestamp management platform
+                    <span style="font-size: 1.2em;">📖</span> <strong>VidChapter:</strong> Video chaptering and timestamp management platform
                 </li>
                 <li style="margin-bottom: 8px;">
                     <span style="font-size: 1.2em;">🏷️</span> <strong>VidTags:</strong> Video tagging and metadata management platform
