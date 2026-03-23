@@ -84,14 +84,26 @@ class UniversalInstaller
         $licenseData = $_SESSION['license_data'] ?? [];
         $licenseType = $licenseData['type'] ?? 'normal';
         $licenseFeatures = $licenseData['features'] ?? [];
+        $licensedApp = $licenseData['licensed_app'] ?? null;
         
         $availableApps = [];
         
-        foreach ($allApps as $appId => $app) {
+        // If license is app-specific, only show that app
+        if ($licensedApp && isset($allApps[$licensedApp])) {
+            $app = $allApps[$licensedApp];
             // Check if app supports the license type
             if (isset($app['features'][$licenseType])) {
-                $availableApps[$appId] = $app;
-                $availableApps[$appId]['available_features'] = $app['features'][$licenseType];
+                $availableApps[$licensedApp] = $app;
+                $availableApps[$licensedApp]['available_features'] = $app['features'][$licenseType];
+            }
+        } else {
+            // Fallback: show all apps that support the license type (for backward compatibility)
+            foreach ($allApps as $appId => $app) {
+                // Check if app supports the license type
+                if (isset($app['features'][$licenseType])) {
+                    $availableApps[$appId] = $app;
+                    $availableApps[$appId]['available_features'] = $app['features'][$licenseType];
+                }
             }
         }
         

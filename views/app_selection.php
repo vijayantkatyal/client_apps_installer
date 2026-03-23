@@ -3,6 +3,7 @@ $currentStep = 2;
 $licenseData = $_SESSION['license_data'] ?? [];
 $licenseType = $licenseData['type'] ?? 'normal';
 $licenseFeatures = $licenseData['features'] ?? [];
+$licensedApp = $licenseData['licensed_app'] ?? null;
 ?>
 <?php require 'layout.php'; ?>
 
@@ -23,10 +24,15 @@ $licenseFeatures = $licenseData['features'] ?? [];
                 <strong>License Key:</strong> 
                 <span style="font-family: monospace; color: #0c5460;"><?php echo htmlspecialchars($licenseData['license_key'] ?? ''); ?></span>
             </div>
-            <?php if ($licenseData['expires']): ?>
+            <?php if ($licensedApp): ?>
             <div>
-                <strong>Expires:</strong> 
-                <span style="color: #0c5460;"><?php echo htmlspecialchars($licenseData['expires']); ?></span>
+                <strong>Licensed Application:</strong> 
+                <span style="color: #0c5460; font-weight: bold;">
+                    <?php 
+                    $appsConfig = json_decode(file_get_contents(__DIR__ . '/../config/apps.json'), true);
+                    echo htmlspecialchars($appsConfig[$licensedApp]['name'] ?? $licensedApp); 
+                    ?>
+                </span>
             </div>
             <?php endif; ?>
         </div>
@@ -40,6 +46,12 @@ $licenseFeatures = $licenseData['features'] ?? [];
                     </span>
                 <?php endforeach; ?>
             </div>
+        </div>
+        <?php endif; ?>
+        <?php if ($licensedApp): ?>
+        <div style="margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 4px; border: 1px solid #ffeaa7;">
+            <strong style="color: #856404;">📋 App-Specific License:</strong> 
+            <span style="color: #856404;">This license is valid only for the application listed above.</span>
         </div>
         <?php endif; ?>
     </div>

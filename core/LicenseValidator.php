@@ -169,7 +169,8 @@ class LicenseValidator
                 'domain' => $domain,
                 'fingerprint' => $fingerprint,
                 'validated_at' => date('Y-m-d H:i:s'),
-                'signature' => $result['signature']
+                'signature' => $result['signature'],
+                'licensed_app' => $result['licensed_app'] ?? $this->parseAppFromLicenseKey($licenseKey)
             ]
         ];
     }
@@ -198,6 +199,9 @@ class LicenseValidator
     private function checkOfflineGracePeriod($licenseKey)
     {
         // TEMPORARY: Allow testing without license server
+        // Parse app from license key for testing
+        $licensedApp = $this->parseAppFromLicenseKey($licenseKey);
+        
         return [
             'success' => true,
             'data' => [
@@ -211,7 +215,8 @@ class LicenseValidator
                 'domain' => $this->getCurrentDomain(),
                 'fingerprint' => $this->generateFingerprint(),
                 'validated_at' => date('Y-m-d H:i:s'),
-                'signature' => 'test_signature'
+                'signature' => 'test_signature',
+                'licensed_app' => $licensedApp
             ],
             'offline' => true,
             'test_mode' => true
@@ -301,5 +306,35 @@ class LicenseValidator
     {
         $license = $this->getStoredLicense();
         return $license && in_array($feature, $license['features'] ?? []);
+    }
+
+    public function getLicensedApp()
+    {
+        $license = $this->getStoredLicense();
+        return $license ? $license['licensed_app'] ?? null : null;
+    }
+
+    private function parseAppFromLicenseKey($licenseKey)
+    {
+        // For testing purposes, parse app from license key pattern
+        // Format: APPXXXX-XXXXX-XXXXX-XXXXX where APP identifies the application
+        $licenseKey = strtoupper(trim($licenseKey));
+        
+        // Map app prefixes to app IDs
+        $appMap = [
+            'VIDPOWR' => 'vidpowr',
+            'FEEDPLAY' => 'feedplay', 
+            'VIDCHAPTER' => 'vidchapter',
+            'VIDTAGS' => 'vidtags'
+        ];
+        
+        foreach ($appMap as $prefix => $appId) {
+            if (strpos($licenseKey, $prefix) === 0) {
+                return $appId;
+            }
+        }
+        
+        // Default to first app if no prefix found (for backward compatibility)
+        return 'vidpowr';
     }
 }
