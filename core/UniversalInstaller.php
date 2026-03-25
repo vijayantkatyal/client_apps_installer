@@ -74,8 +74,6 @@ class UniversalInstaller
 
     public function getAvailableApps()
     {
-        $allApps = $this->appsConfig ?? [];
-        
         // If no license is validated, return empty array
         if (!isset($_SESSION['license_validated']) || !$_SESSION['license_validated']) {
             return [];
@@ -86,6 +84,51 @@ class UniversalInstaller
         $licenseFeatures = $licenseData['features'] ?? [];
         $licensedApp = $licenseData['licensed_app'] ?? null;
         
+        // Try to get products from license server first
+        $products = $_SESSION['products_info'] ?? [];
+        
+        if (!empty($products)) {
+            $availableApps = [];
+            
+            // Map license server products to installer format
+            foreach ($products as $product) {
+                $appId = $this->getAppIdFromProduct($product);
+                
+                // If license is app-specific, only show that app
+                if ($licensedApp && $appId !== $licensedApp) {
+                    continue;
+                }
+                
+                // Check if product name matches the license type
+                $productMatchesType = false;
+                if ($licenseType === 'normal' && strpos($product['name'], 'Agency') === false) {
+                    $productMatchesType = true;
+                } elseif ($licenseType === 'agency' && strpos($product['name'], 'Agency') !== false) {
+                    $productMatchesType = true;
+                }
+                
+                // Only include products that match the license type
+                if ($productMatchesType && isset($product['features'][$licenseType])) {
+                    $availableApps[$appId] = [
+                        'uid' => $product['uid'],
+                        'name' => $product['name'],
+                        'description' => $product['description'],
+                        'version' => $product['version'],
+                        'website' => $product['website'],
+                        'icon' => $product['icon'],
+                        'category' => $product['category'],
+                        'requirements' => $product['requirements'] ?? [],
+                        'available_features' => $product['features'][$licenseType],
+                        'features' => $product['features']
+                    ];
+                }
+            }
+            
+            return $availableApps;
+        }
+        
+        // Fallback to local apps.json if no products from license server
+        $allApps = $this->appsConfig ?? [];
         $availableApps = [];
         
         // If license is app-specific, only show that app
@@ -108,6 +151,23 @@ class UniversalInstaller
         }
         
         return $availableApps;
+    }
+    
+    private function getAppIdFromProduct($product)
+    {
+        // Map product names back to app IDs
+        $nameToAppMap = [
+            'VidPowr' => 'vidpowr',
+            'VidPowr Agency' => 'vidpowr',
+            'VidTags Standard' => 'vidtags',
+            'VidTags Agency' => 'vidtags',
+            'FeedPlay Standard' => 'feedplay',
+            'FeedPlay Agency' => 'feedplay',
+            'VidChapter Standard' => 'vidchapter',
+            'VidChapter Agency' => 'vidchapter'
+        ];
+        
+        return $nameToAppMap[$product['name']] ?? 'vidpowr';
     }
 
     public function getCurrentApp()
@@ -163,6 +223,13 @@ class UniversalInstaller
             $_SESSION['license_validated'] = true;
             $_SESSION['license_data'] = $result['data'];
             $_SESSION['license_key'] = $licenseKey;
+            
+            // Fetch products info from license server
+            $productsResult = $licenseValidator->getProductsInfo();
+            if ($productsResult['success']) {
+                $_SESSION['products_info'] = $productsResult['products'];
+            }
+            
             return $result;
         } else {
             $_SESSION['license_error'] = $result['error'];

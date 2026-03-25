@@ -6,7 +6,7 @@ services:
     build: .
     container_name: universal_installer_web
     ports:
-      - "8000:80"
+      - "8001:80"
     volumes:
       - .:/var/www/html
       - ./logs:/var/log/apache2

@@ -172,7 +172,124 @@ class LicenseServer
     {
         return [
             'valid' => false,
-            'error' => $message
+            'error' => $message,
+            'timestamp' => time()
+        ];
+    }
+    
+    public function getProductsInfo()
+    {
+        $products = [
+            [
+                'uid' => 2,
+                'name' => 'VidPowr',
+                'description' => 'Professional video hosting and streaming platform',
+                'version' => '2.1.0',
+                'website' => 'https://vidpowr.net',
+                'icon' => '🎬',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['video_upload', 'basic_analytics', 'embed_player'],
+                    'agency' => ['video_upload', 'advanced_analytics', 'embed_player', 'api_access', 'white_label', 'multi_domain']
+                ]
+            ],
+            [
+                'uid' => 3,
+                'name' => 'VidPowr Agency',
+                'description' => 'Professional video hosting and streaming platform - Agency Edition',
+                'version' => '2.1.0',
+                'website' => 'https://vidpowr.net',
+                'icon' => '🎬',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['video_upload', 'basic_analytics', 'embed_player'],
+                    'agency' => ['video_upload', 'advanced_analytics', 'embed_player', 'api_access', 'white_label', 'multi_domain']
+                ]
+            ],
+            [
+                'uid' => 4,
+                'name' => 'VidTags Standard',
+                'description' => 'Video tagging and metadata management platform',
+                'version' => '1.3.0',
+                'website' => 'https://vidtags.net',
+                'icon' => '🏷️',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['tag_management', 'metadata_editing', 'search_functionality'],
+                    'agency' => ['tag_management', 'metadata_editing', 'advanced_search', 'api_access', 'bulk_tagging', 'auto_tagging']
+                ]
+            ],
+            [
+                'uid' => 5,
+                'name' => 'VidTags Agency',
+                'description' => 'Video tagging and metadata management platform - Agency Edition',
+                'version' => '1.3.0',
+                'website' => 'https://vidtags.net',
+                'icon' => '🏷️',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['tag_management', 'metadata_editing', 'search_functionality'],
+                    'agency' => ['tag_management', 'metadata_editing', 'advanced_search', 'api_access', 'bulk_tagging', 'auto_tagging']
+                ]
+            ],
+            [
+                'uid' => 6,
+                'name' => 'FeedPlay Standard',
+                'description' => 'RSS feed and podcast management platform',
+                'version' => '1.8.0',
+                'website' => 'https://feedplay.net',
+                'icon' => '🎵',
+                'category' => 'podcast',
+                'features' => [
+                    'normal' => ['rss_feeds', 'podcast_hosting', 'basic_analytics'],
+                    'agency' => ['rss_feeds', 'podcast_hosting', 'advanced_analytics', 'api_access', 'multi_channel', 'white_label']
+                ]
+            ],
+            [
+                'uid' => 7,
+                'name' => 'FeedPlay Agency',
+                'description' => 'RSS feed and podcast management platform - Agency Edition',
+                'version' => '1.8.0',
+                'website' => 'https://feedplay.net',
+                'icon' => '🎵',
+                'category' => 'podcast',
+                'features' => [
+                    'normal' => ['rss_feeds', 'podcast_hosting', 'basic_analytics'],
+                    'agency' => ['rss_feeds', 'podcast_hosting', 'advanced_analytics', 'api_access', 'multi_channel', 'white_label']
+                ]
+            ],
+            [
+                'uid' => 8,
+                'name' => 'VidChapter Standard',
+                'description' => 'Video chaptering and timestamp management platform',
+                'version' => '1.5.0',
+                'website' => 'https://vidchapter.net',
+                'icon' => '📖',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['chapter_creation', 'timestamp_management', 'basic_analytics'],
+                    'agency' => ['chapter_creation', 'timestamp_management', 'advanced_analytics', 'api_access', 'bulk_processing', 'white_label']
+                ]
+            ],
+            [
+                'uid' => 9,
+                'name' => 'VidChapter Agency',
+                'description' => 'Video chaptering and timestamp management platform - Agency Edition',
+                'version' => '1.5.0',
+                'website' => 'https://vidchapter.net',
+                'icon' => '📖',
+                'category' => 'video',
+                'features' => [
+                    'normal' => ['chapter_creation', 'timestamp_management', 'basic_analytics'],
+                    'agency' => ['chapter_creation', 'timestamp_management', 'advanced_analytics', 'api_access', 'bulk_processing', 'white_label']
+                ]
+            ]
+        ];
+        
+        return [
+            'success' => true,
+            'products' => $products,
+            'timestamp' => time()
         ];
     }
 }
@@ -210,6 +327,10 @@ CREATE TABLE license_activations (
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['REQUEST_URI'] === '/license/validate') {
     $server = new LicenseServer();
     $response = $server->validateLicense();
+    echo json_encode($response);
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $_SERVER['REQUEST_URI'] === '/api/products') {
+    $server = new LicenseServer();
+    $response = $server->getProductsInfo();
     echo json_encode($response);
 } else {
     http_response_code(404);

@@ -1,21 +1,24 @@
 {
   "license_servers": {
-    "vidpowr": "http://localhost:9000",
-    "blogpro": "http://localhost:9000", 
-    "shoplite": "http://localhost:9000"
+    "vidpowr": "http://192.168.1.16:8000",
+    "vidtags": "http://192.168.1.16:8000", 
+    "feedplay": "http://192.168.1.16:8000",
+    "vidchapter": "http://192.168.1.16:8000"
   },
   "release_servers": {
-    "vidpowr": "http://localhost:9001",
-    "blogpro": "http://localhost:9001",
-    "shoplite": "http://localhost:9001"
+    "vidpowr": "http://192.168.1.16:8001",
+    "vidtags": "http://192.168.1.16:8001",
+    "feedplay": "http://192.168.1.16:8001",
+    "vidchapter": "http://192.168.1.16:8001"
   },
   "endpoints": {
-    "validate_license": "/api/validate",
+    "validate_license": "/api/license/validate",
     "get_download_token": "/api/download/token",
     "get_download_url": "/api/download/url",
     "list_versions": "/api/versions",
     "check_updates": "/api/updates/check",
-    "get_update_url": "/api/updates/download"
+    "get_update_url": "/api/updates/download",
+    "get_products_info": "/api/license/all/products"
   },
   "security": {
     "token_expiry": 3600,

@@ -2,13 +2,21 @@
 
 class LicenseValidator
 {
-    private $licenseServer = 'https://api.vidpowr.com/license';
+    private $licenseServer = 'http://192.168.1.16:8000/api/license';
     private $licenseFile;
     private $encryptionKey = 'vidpowr_license_key_2024';
 
     public function __construct()
     {
-        $this->licenseFile = dirname(__DIR__) . '/storage/license/license.json';
+        $baseDir = __DIR__ . '/..';
+        $storageDir = $baseDir . '/storage/license';
+        
+        // Create storage directory if it doesn't exist
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+        
+        $this->licenseFile = $storageDir . '/license.json';
     }
 
     public function validate($licenseKey)
@@ -28,9 +36,20 @@ class LicenseValidator
         // Validate against license server
         $response = $this->validateWithServer($licenseKey, $domain, $fingerprint);
         
+        // echo json_encode([
+        //     "domain" => $domain,
+        //     "fingerprint" => $fingerprint,
+        //     "key" => $licenseKey,
+        //     "response" => $response
+        // ]);
+        // die();
+        
         if ($response['success']) {
-            // Store license locally
-            $this->storeLicense($response['data']);
+            // Store license locally (but don't fail if storage fails)
+            $stored = $this->storeLicense($response['data']);
+            if (!$stored) {
+                error_log("Warning: Failed to store license locally, but validation succeeded");
+            }
             return $response;
         } else {
             // Check for offline grace period
@@ -50,22 +69,13 @@ class LicenseValidator
 
     private function isValidFormat($licenseKey)
     {
-        // Temporary bypass for testing - remove in production
-        return true;
-        
-        // Original validation (commented out for testing)
-        /*
         // Trim whitespace and convert to uppercase
         $licenseKey = strtoupper(trim($licenseKey));
         
-        // Format: XXXXXXXX-XXXXX-XXXXX-XXXXX (8 chars - 5 chars - 5 chars - 5 chars)
-        $isValid = preg_match('/^[A-Z0-9]{8}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/', $licenseKey);
-        
-        // Debug: Log the validation attempt (remove in production)
-        error_log("License validation attempt: '$licenseKey' - Valid: " . ($isValid ? 'YES' : 'NO'));
+        // Format: PREFIX-XXXXXXXXXXXX-XXXX (variable prefix - 12 chars - 4 chars checksum)
+        $isValid = preg_match('/^[A-Z]+-[A-Z0-9]{12}-[A-Z0-9]{4}$/', $licenseKey);
         
         return $isValid;
-        */
     }
 
     private function generateFingerprint()
@@ -95,6 +105,10 @@ class LicenseValidator
 
     private function validateWithServer($licenseKey, $domain, $fingerprint)
     {
+        $config = json_decode(file_get_contents(dirname(__DIR__) . '/config/servers.json'), true);
+        $baseUrl = $config['license_servers']['vidpowr'] ?? 'http://localhost:8000';
+        $endpoint = $config['endpoints']['validate_license'] ?? '/license/validate';
+        
         $data = [
             'license_key' => $licenseKey,
             'domain' => $domain,
@@ -104,7 +118,7 @@ class LicenseValidator
         ];
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->licenseServer . '/validate');
+        curl_setopt($ch, CURLOPT_URL, $baseUrl . $endpoint);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -113,12 +127,19 @@ class LicenseValidator
             'User-Agent: VidPowr-Installer/1.0'
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
+
+        // Debug logging
+        error_log("License Server URL: " . $baseUrl . $endpoint);
+        error_log("Request Data: " . json_encode($data));
+        error_log("HTTP Code: " . $httpCode);
+        error_log("CURL Error: " . $error);
+        error_log("Response: " . $response);
 
         if ($error) {
             return [
@@ -158,21 +179,30 @@ class LicenseValidator
             ];
         }
 
+        // Map license server response to installer format
         return [
             'success' => true,
             'data' => [
                 'license_key' => $licenseKey,
-                'type' => $result['type'] ?? 'normal',
-                'features' => $result['features'] ?? [],
-                'expires' => $result['expires'] ?? null,
-                'max_users' => $result['max_users'] ?? null,
+                'type' => $result['license_type'] ?? 'normal',
+                'features' => $this->getFeaturesForLicenseType($result['license_type'] ?? 'normal'),
+                'expires' => $result['expires_at'] ?? null,
                 'domain' => $domain,
                 'fingerprint' => $fingerprint,
                 'validated_at' => date('Y-m-d H:i:s'),
-                'signature' => $result['signature'],
-                'licensed_app' => $result['licensed_app'] ?? $this->parseAppFromLicenseKey($licenseKey)
+                'signature' => $result['signature'] ?? 'no_signature',
+                'licensed_app' => $this->parseAppFromLicenseKey($licenseKey)
             ]
         ];
+    }
+    
+    private function getFeaturesForLicenseType($licenseType)
+    {
+        if ($licenseType === 'agency') {
+            return ['video_processing', 'agency_mode', 'api_access', 'white_label', 'multi_domain'];
+        } else {
+            return ['video_processing', 'basic_analytics'];
+        }
     }
 
     private function verifySignature($data)
@@ -191,39 +221,27 @@ class LicenseValidator
 
     private function storeLicense($licenseData)
     {
-        $encrypted = $this->encrypt(json_encode($licenseData));
-        file_put_contents($this->licenseFile, $encrypted);
-        chmod($this->licenseFile, 0600);
+        try {
+            $encrypted = $this->encrypt(json_encode($licenseData));
+            $result = file_put_contents($this->licenseFile, $encrypted);
+            
+            if ($result === false) {
+                error_log("Failed to write license file: " . $this->licenseFile);
+                return false;
+            }
+            
+            // Try to set permissions, but don't fail if it doesn't work
+            @chmod($this->licenseFile, 0600);
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("Error storing license: " . $e->getMessage());
+            return false;
+        }
     }
 
     private function checkOfflineGracePeriod($licenseKey)
     {
-        // TEMPORARY: Allow testing without license server
-        // Parse app from license key for testing
-        $licensedApp = $this->parseAppFromLicenseKey($licenseKey);
-        
-        return [
-            'success' => true,
-            'data' => [
-                'license_key' => $licenseKey,
-                'type' => strpos($licenseKey, 'AGENC') !== false ? 'agency' : 'normal',
-                'features' => strpos($licenseKey, 'AGENC') !== false ? 
-                    ['video_processing', 'agency_mode', 'api_access', 'white_label'] : 
-                    ['video_processing', 'basic_analytics'],
-                'expires' => '2025-12-31',
-                'max_users' => strpos($licenseKey, 'AGENC') !== false ? 100 : 10,
-                'domain' => $this->getCurrentDomain(),
-                'fingerprint' => $this->generateFingerprint(),
-                'validated_at' => date('Y-m-d H:i:s'),
-                'signature' => 'test_signature',
-                'licensed_app' => $licensedApp
-            ],
-            'offline' => true,
-            'test_mode' => true
-        ];
-        
-        // Original code (commented out for testing)
-        /*
         $storedLicense = $this->getStoredLicense();
         
         if (!$storedLicense) {
@@ -257,7 +275,6 @@ class LicenseValidator
             'data' => $storedLicense,
             'offline' => true
         ];
-        */
     }
 
     private function encrypt($data)
@@ -314,27 +331,71 @@ class LicenseValidator
         return $license ? $license['licensed_app'] ?? null : null;
     }
 
+    public function getProductsInfo()
+    {
+        $config = json_decode(file_get_contents(dirname(__DIR__) . '/config/servers.json'), true);
+        $baseUrl = $config['license_servers']['vidpowr'] ?? 'http://localhost:8000';
+        $endpoint = $config['endpoints']['get_products_info'] ?? '/api/license/all/products';
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $baseUrl . $endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'User-Agent: VidPowr-Installer/1.0'
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => 'Cannot connect to license server: ' . $error
+            ];
+        }
+
+        if ($httpCode !== 200) {
+            return [
+                'success' => false,
+                'error' => 'License server returned error: HTTP ' . $httpCode
+            ];
+        }
+
+        $result = json_decode($response, true);
+        
+        if (!$result) {
+            return [
+                'success' => false,
+                'error' => 'Invalid response from license server'
+            ];
+        }
+
+        return $result;
+    }
+
     private function parseAppFromLicenseKey($licenseKey)
     {
-        // For testing purposes, parse app from license key pattern
-        // Format: APPXXXX-XXXXX-XXXXX-XXXXX where APP identifies the application
+        // Parse app from license key pattern
+        // Format: PREFIX-XXXXXXXXXXXX-XXXXX where PREFIX identifies the application
         $licenseKey = strtoupper(trim($licenseKey));
+        
+        // Extract prefix from the license key (everything before the first dash)
+        $parts = explode('-', $licenseKey);
+        $prefix = $parts[0] ?? '';
         
         // Map app prefixes to app IDs
         $appMap = [
-            'VIDPOWR' => 'vidpowr',
-            'FEEDPLAY' => 'feedplay', 
-            'VIDCHAPTER' => 'vidchapter',
-            'VIDTAGS' => 'vidtags'
+            'VIDP' => 'vidpowr',
+            'FEED' => 'feedplay', 
+            'VIDC' => 'vidchapter',
+            'VIDT' => 'vidtags'
         ];
         
-        foreach ($appMap as $prefix => $appId) {
-            if (strpos($licenseKey, $prefix) === 0) {
-                return $appId;
-            }
-        }
-        
-        // Default to first app if no prefix found (for backward compatibility)
-        return 'vidpowr';
+        return $appMap[$prefix] ?? 'vidpowr';
     }
 }
