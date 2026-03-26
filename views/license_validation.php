@@ -43,11 +43,35 @@
     </div>
     
     <div class="form-actions" style="margin-top: 20px;">
-        <button type="submit" class="btn btn-primary btn-block" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s;">
-            Validate License
+        <button type="submit" class="btn btn-primary btn-block" id="validateBtn" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s;">
+            <span id="btnText">Validate License</span>
+            <span id="btnLoading" style="display: none;">
+                <i class="fa fa-spinner fa-spin"></i> Validating...
+            </span>
         </button>
     </div>
 </form>
+
+<script>
+document.querySelector('.license-form').addEventListener('submit', function(e) {
+    var btn = document.getElementById('validateBtn');
+    var btnText = document.getElementById('btnText');
+    var btnLoading = document.getElementById('btnLoading');
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    
+    // Add loading spinner CSS if not present
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+        document.head.appendChild(link);
+    }
+});
+</script>
 
 <div class="mt-40">
     <h3>📋 License Information</h3>
