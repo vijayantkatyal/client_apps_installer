@@ -6,10 +6,10 @@
     "vidchapter": "https://license.lpal.net"
   },
   "release_servers": {
-    "vidpowr": "http://192.168.1.16:8001",
-    "vidtags": "http://192.168.1.16:8001",
-    "feedplay": "http://192.168.1.16:8001",
-    "vidchapter": "http://192.168.1.16:8001"
+    "vidpowr": "https://license.lpal.net",
+    "vidtags": "https://license.lpal.net",
+    "feedplay": "https://license.lpal.net",
+    "vidchapter": "https://license.lpal.net"
   },
   "endpoints": {
     "validate_license": "/api/license/validate",
