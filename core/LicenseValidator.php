@@ -2,7 +2,7 @@
 
 class LicenseValidator
 {
-    private $licenseServer = 'http://192.168.1.16:8000/api/license';
+    private $licenseServer = 'https://license.lpal.net/api/license';
     private $licenseFile;
     private $encryptionKey = 'vidpowr_license_key_2024';
 
@@ -66,6 +66,11 @@ class LicenseValidator
         }
         return null;
     }
+    
+    public function getLicenseFile()
+    {
+        return $this->licenseFile;
+    }
 
     private function isValidFormat($licenseKey)
     {
@@ -106,7 +111,7 @@ class LicenseValidator
     private function validateWithServer($licenseKey, $domain, $fingerprint)
     {
         $config = json_decode(file_get_contents(dirname(__DIR__) . '/config/servers.json'), true);
-        $baseUrl = $config['license_servers']['vidpowr'] ?? 'http://localhost:8000';
+        $baseUrl = $config['license_servers']['vidpowr'] ?? 'https://license.lpal.net';
         $endpoint = $config['endpoints']['validate_license'] ?? '/license/validate';
         
         $data = [
@@ -334,7 +339,7 @@ class LicenseValidator
     public function getProductsInfo()
     {
         $config = json_decode(file_get_contents(dirname(__DIR__) . '/config/servers.json'), true);
-        $baseUrl = $config['license_servers']['vidpowr'] ?? 'http://localhost:8000';
+        $baseUrl = $config['license_servers']['vidpowr'] ?? 'https://license.lpal.net';
         $endpoint = $config['endpoints']['get_products_info'] ?? '/api/license/all/products';
         
         $ch = curl_init();

@@ -17,7 +17,10 @@
         <strong>Stored License Found:</strong><br>
         License Type: <strong><?php echo htmlspecialchars($storedLicense['type']); ?></strong><br>
         Validated: <?php echo htmlspecialchars($storedLicense['validated_at']); ?><br>
-        <a href="install.php?step=app_selection" class="btn btn-primary" style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">Continue with Stored License</a>
+        <div style="margin-top: 10px;">
+            <a href="install.php?step=app_selection" class="btn btn-primary" style="display: inline-block; padding: 8px 16px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">Continue with Stored License</a>
+            <a href="install.php?action=remove_license&step=license_validation" class="btn btn-danger" style="display: inline-block; padding: 8px 16px; background: #dc3545; color: white; text-decoration: none; border-radius: 6px;" onclick="return confirm('Are you sure you want to remove the stored license?')">Remove Stored License</a>
+        </div>
     </div>
 <?php endif; ?>
 

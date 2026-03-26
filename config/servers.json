@@ -1,9 +1,9 @@
 {
   "license_servers": {
-    "vidpowr": "http://192.168.1.16:8000",
-    "vidtags": "http://192.168.1.16:8000", 
-    "feedplay": "http://192.168.1.16:8000",
-    "vidchapter": "http://192.168.1.16:8000"
+    "vidpowr": "https://license.lpal.net",
+    "vidtags": "https://license.lpal.net", 
+    "feedplay": "https://license.lpal.net",
+    "vidchapter": "https://license.lpal.net"
   },
   "release_servers": {
     "vidpowr": "http://192.168.1.16:8001",

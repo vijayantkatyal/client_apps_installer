@@ -74,6 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Handle GET actions
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    switch ($_GET['action'] ?? '') {
+        case 'remove_license':
+            $installer->removeStoredLicense();
+            header('Location: install.php?step=license_validation');
+            exit;
+    }
+}
+
 // Display appropriate step
 switch ($step) {
     case 'app_selection':

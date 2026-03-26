@@ -398,4 +398,23 @@ class UniversalInstaller
         $updater = new AppUpdater($installInfo['app'], $installInfo['license_key'], $this->serversConfig);
         return $updater->update($installInfo['version']);
     }
+    
+    public function removeStoredLicense()
+    {
+        // Remove license file
+        $licenseValidator = new LicenseValidator();
+        $licenseFile = $licenseValidator->getLicenseFile();
+        
+        if (file_exists($licenseFile)) {
+            unlink($licenseFile);
+        }
+        
+        // Clear session data
+        unset($_SESSION['license_validated']);
+        unset($_SESSION['license_data']);
+        unset($_SESSION['license_key']);
+        unset($_SESSION['products_info']);
+        
+        return ['success' => true];
+    }
 }
