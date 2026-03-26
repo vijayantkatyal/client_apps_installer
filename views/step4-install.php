@@ -1,4 +1,4 @@
-<?php $currentStep = 4; ?>
+<?php $currentStep = 5; ?>
 <?php require 'layout.php'; ?>
 
 <div class="mb-20">
