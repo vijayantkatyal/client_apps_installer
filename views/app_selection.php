@@ -36,18 +36,7 @@ $licensedApp = $licenseData['licensed_app'] ?? null;
             </div>
             <?php endif; ?>
         </div>
-        <?php if (!empty($licenseFeatures)): ?>
-        <div style="margin-top: 15px;">
-            <strong>Available Features:</strong>
-            <div style="margin-top: 8px;">
-                <?php foreach ($licenseFeatures as $feature): ?>
-                    <span style="display: inline-block; background: #0c5460; color: white; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 0.85em;">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature))); ?>
-                    </span>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
+        
         <?php if ($licensedApp): ?>
         <div style="margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 4px; border: 1px solid #ffeaa7;">
             <strong style="color: #856404;">📋 App-Specific License:</strong> 
@@ -70,19 +59,6 @@ $licensedApp = $licenseData['licensed_app'] ?? null;
                 <div class="app-icon"><?php echo $app['icon']; ?></div>
                 <h3><?php echo htmlspecialchars($app['name']); ?></h3>
                 <p class="app-description"><?php echo htmlspecialchars($app['description']); ?></p>
-                
-                <?php if (isset($app['available_features'])): ?>
-                <div class="app-features" style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                    <strong>Available Features:</strong>
-                    <div style="margin-top: 8px;">
-                        <?php foreach ($app['available_features'] as $feature): ?>
-                            <span style="display: inline-block; background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; margin: 1px; font-size: 0.75em;">
-                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature))); ?>
-                            </span>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
                 
                 <div class="app-info">
                     <div class="app-version">

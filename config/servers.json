@@ -1,16 +1,5 @@
 {
-  "license_servers": {
-    "vidpowr": "https://license.lpal.net",
-    "vidtags": "https://license.lpal.net", 
-    "feedplay": "https://license.lpal.net",
-    "vidchapter": "https://license.lpal.net"
-  },
-  "release_servers": {
-    "vidpowr": "https://license.lpal.net",
-    "vidtags": "https://license.lpal.net",
-    "feedplay": "https://license.lpal.net",
-    "vidchapter": "https://license.lpal.net"
-  },
+  "base_url": "https://license.lpal.net",
   "endpoints": {
     "validate_license": "/api/license/validate",
     "get_download_token": "/api/download/token",

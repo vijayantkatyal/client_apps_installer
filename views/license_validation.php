@@ -1,4 +1,4 @@
-<?php $currentStep = 0; ?>
+<?php $currentStep = 1; ?>
 <?php require 'layout.php'; ?>
 
 <div class="mb-20">
@@ -37,9 +37,6 @@
                value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>"
                required
                style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px; font-family: monospace;">
-        <small class="form-text" style="color: #6c757d; font-size: 0.9em; margin-top: 5px; display: block;">
-            Format: XXXXXXXX-XXXXX-XXXXX-XXXXX
-        </small>
     </div>
     
     <div class="form-actions" style="margin-top: 20px;">
@@ -76,17 +73,19 @@ document.querySelector('.license-form').addEventListener('submit', function(e) {
 <div class="mt-40">
     <h3>📋 License Information</h3>
     <div class="license-info" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 10px;">
             <h4>License Types:</h4>
+            <br>
             <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 10px;">
+                <li style="margin-bottom: 5px;">
                     <strong>Normal License:</strong> Access to basic features for single domain usage
                 </li>
-                <li style="margin-bottom: 10px;">
-                    <strong>Agency License:</strong> Full access to all features including multi-domain support and API access
+                <li>
+                    <strong>Agency License:</strong> Full access to all features including multi-domain support and Agency Clients
                 </li>
             </ul>
         </div>
+        <br>
         
         <div>
             <h4>Available Applications:</h4>

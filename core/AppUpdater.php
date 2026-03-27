@@ -14,7 +14,7 @@ class AppUpdater
         $this->appId = $appId;
         $this->licenseKey = $licenseKey;
         $this->serversConfig = $serversConfig;
-        $this->baseUrl = $serversConfig['release_servers'][$appId] ?? '';
+        $this->baseUrl = $serversConfig['base_url'] ?? '';
         $this->tempDir = dirname(__DIR__) . '/storage/temp/';
         $this->backupDir = dirname(__DIR__) . '/storage/backups/';
         $this->ensureDirectories();

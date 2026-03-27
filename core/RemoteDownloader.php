@@ -14,7 +14,7 @@ class RemoteDownloader
         $this->licenseKey = $licenseKey;
         $this->appId = $appId;
         $this->serversConfig = $serversConfig;
-        $this->baseUrl = $serversConfig['release_servers'][$appId] ?? '';
+        $this->baseUrl = $serversConfig['base_url'] ?? '';
         $this->tempDir = dirname(__DIR__) . '/storage/temp/';
         $this->ensureTempDir();
     }
