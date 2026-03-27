@@ -260,7 +260,7 @@ class UniversalInstaller
         if ($result['success']) {
             $_SESSION['database_configured'] = true;
             $_SESSION['db_config'] = $result['config'];
-            header('Location: install.php?step=download');
+            header('Location: install.php?step=install');
             exit;
         } else {
             $_SESSION['database_error'] = $result['error'];
@@ -297,13 +297,13 @@ class UniversalInstaller
                 exit;
             } else {
                 $_SESSION['download_error'] = $result['error'];
-                header('Location: install.php?step=download');
+                header('Location: install.php?step=install');
                 exit;
             }
 
         } catch (Exception $e) {
             $_SESSION['download_error'] = $e->getMessage();
-            header('Location: install.php?step=download');
+            header('Location: install.php?step=install');
             exit;
         }
     }
@@ -311,7 +311,7 @@ class UniversalInstaller
     public function showInstallationProgress()
     {
         if (!isset($_SESSION['app_downloaded'])) {
-            header('Location: install.php?step=download');
+            header('Location: install.php?step=install');
             exit;
         }
 
