@@ -91,7 +91,7 @@
         </div>
         
         <div class="text-center mt-20">
-            <a href="install.php?step=2" class="btn btn-primary">Continue Anyway</a>
+            <a href="install.php?step=database" class="btn btn-primary">Continue Anyway</a>
             <a href="install.php?step=1" class="btn btn-secondary">Re-check</a>
         </div>
     <?php else: ?>

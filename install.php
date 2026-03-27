@@ -62,6 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $installer->performInstallation($_POST);
             break;
             
+        case 'install':
+            $installer->performInstallation($_POST);
+            break;
+            
         case 'check_updates':
             $updateCheck = $installer->checkForUpdates();
             echo json_encode($updateCheck);
