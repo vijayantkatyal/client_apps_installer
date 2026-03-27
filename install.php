@@ -78,8 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     switch ($_GET['action'] ?? '') {
         case 'remove_license':
-            $installer->removeStoredLicense();
-            header('Location: install.php?step=license_validation');
+            $result = $installer->removeStoredLicense();
+            if ($result['success']) {
+                header('Location: install.php?step=license_validation');
+            } else {
+                $_SESSION['license_error'] = $result['error'];
+                header('Location: install.php?step=license_validation');
+            }
             exit;
     }
 }

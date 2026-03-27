@@ -406,7 +406,16 @@ class UniversalInstaller
         $licenseFile = $licenseValidator->getLicenseFile();
         
         if (file_exists($licenseFile)) {
-            unlink($licenseFile);
+            // Check if file is writable before attempting deletion
+            if (!is_writable($licenseFile)) {
+                // Try to make it writable
+                chmod($licenseFile, 0644);
+            }
+            
+            // Attempt deletion with error suppression
+            if (!@unlink($licenseFile)) {
+                return ['success' => false, 'error' => 'Cannot delete license file. Please check file permissions.'];
+            }
         }
         
         // Clear session data
@@ -415,6 +424,6 @@ class UniversalInstaller
         unset($_SESSION['license_key']);
         unset($_SESSION['products_info']);
         
-        return ['success' => true];
+        return ['success' => true, 'message' => 'License removed successfully'];
     }
 }

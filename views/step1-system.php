@@ -76,7 +76,7 @@
     </div>
     
     <div class="text-center mt-20">
-        <a href="install.php?step=2" class="btn btn-primary">Continue to License Validation</a>
+        <a href="install.php?step=database" class="btn btn-primary">Continue to Database Setup</a>
     </div>
 <?php else: ?>
     <div class="alert alert-danger">
@@ -127,9 +127,12 @@
         
         <div class="card">
             <h4>File Permissions</h4>
-            <p><strong>Writable directories</strong></p>
-            <p>Set permissions:</p>
+            <p><strong>After app download & extraction</strong></p>
+            <p>Set permissions for extracted app:</p>
             <code>chmod -R 755 storage bootstrap/cache<br>chmod -R 777 storage</code>
+            <p style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                ⚠️ These directories will be created after the application is downloaded and extracted during installation.
+            </p>
         </div>
     </div>
 </div>

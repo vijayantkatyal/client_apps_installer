@@ -53,7 +53,8 @@ class SystemCheck
                 'result' => $this->$method($requirement['required'])
             ];
             
-            if (!$results[$key]['result']['status']) {
+            // Don't count file_permissions or optional requirements against all_passed
+            if (!$results[$key]['result']['status'] && $key !== 'file_permissions' && !($results[$key]['result']['optional'] ?? false)) {
                 $allPassed = false;
             }
         }
@@ -124,11 +125,13 @@ class SystemCheck
     {
         $issues = [];
         $writable = [];
+        $not_found = [];
         
         foreach ($required as $dir) {
             if (!file_exists($dir)) {
-                // Don't try to create directories at runtime, just check if they exist
-                error_log("Directory not found: $dir");
+                // These directories don't exist yet - that's expected at this stage
+                $not_found[] = $dir;
+                continue;
             }
             
             if (is_writable($dir)) {
@@ -138,15 +141,25 @@ class SystemCheck
             }
         }
         
-        $status = empty($issues);
+        // If directories don't exist yet, that's OK - they'll be created during app installation
+        if (!empty($not_found)) {
+            $status = true; // Not a failure at this stage
+            $message = 'Directories will be created during installation: ' . implode(', ', $not_found);
+            $fix = 'These directories will be created automatically when the application is downloaded and extracted.';
+        } else {
+            $status = empty($issues);
+            $message = $status ? 'All directories writable' : 'Not writable: ' . implode(', ', $issues);
+            $fix = "Run: chmod -R 755 storage bootstrap/cache && chmod -R 777 storage bootstrap/cache";
+        }
         
         return [
             'status' => $status,
             'writable' => $writable,
             'issues' => $issues,
+            'not_found' => $not_found,
             'required' => $required,
-            'message' => $status ? 'All directories writable' : 'Not writable: ' . implode(', ', $issues),
-            'fix' => "Run: chmod -R 755 storage bootstrap/cache && chmod -R 777 storage bootstrap/cache"
+            'message' => $message,
+            'fix' => $fix
         ];
     }
 
@@ -243,8 +256,8 @@ class SystemCheck
 
     private function canContinue($results)
     {
-        // Check critical requirements that must pass
-        $critical = ['php_version', 'extensions', 'file_permissions'];
+        // Check critical requirements that must pass (excluding file_permissions since directories don't exist yet)
+        $critical = ['php_version', 'extensions'];
         
         foreach ($critical as $key) {
             if (!$results[$key]['result']['status']) {
