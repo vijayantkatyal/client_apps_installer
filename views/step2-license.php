@@ -25,8 +25,8 @@
     </div>
     
     <div class="text-center mt-20">
-        <a href="install.php?step=3" class="btn btn-primary">Continue to Database Setup</a>
-        <a href="install.php?step=2&revalidate=1" class="btn btn-secondary">Re-validate License</a>
+        <a href="install.php?step=database" class="btn btn-primary">Continue to Database Setup</a>
+        <a href="install.php?step=license_validation&revalidate=1" class="btn btn-secondary">Re-validate License</a>
     </div>
 <?php else: ?>
     <form method="POST" action="install.php">
@@ -96,11 +96,11 @@
             <h4>Common Issues</h4>
             <div style="margin-bottom: 15px;">
                 <strong>❌ "Cannot connect to license server"</strong><br>
-                <small>Check your internet connection and firewall settings. The installer needs to connect to api.vidpowr.com</small>
+                <small>Check your internet connection and firewall settings.</small>
             </div>
             <div style="margin-bottom: 15px;">
-                <strong>❌ "Invalid license key format"</strong><br>
-                <small>Make sure you enter the license key exactly as provided, including the VIDPOWR- prefix</small>
+                <strong>❌ "Invalid license key"</strong><br>
+                <small>Make sure you enter the license key exactly as provided</small>
             </div>
             <div style="margin-bottom: 15px;">
                 <strong>❌ "License domain mismatch"</strong><br>

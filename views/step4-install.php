@@ -16,8 +16,21 @@
     </div>
     
     <div class="text-center mt-20">
-        <a href="install.php?step=4" class="btn btn-primary">Retry Installation</a>
-        <a href="install.php?step=3" class="btn btn-secondary">Back to Database Setup</a>
+        <a href="install.php?step=install" class="btn btn-primary">Retry Installation</a>
+        <a href="install.php?step=database" class="btn btn-secondary">Back to Database Setup</a>
+    </div>
+<?php elseif (isset($_SESSION['download_error'])): ?>
+    <div class="alert alert-danger">
+        <strong>❌ Download Failed</strong><br>
+        <?php 
+        echo htmlspecialchars($_SESSION['download_error']);
+        unset($_SESSION['download_error']);
+        ?>
+    </div>
+    
+    <div class="text-center mt-20">
+        <a href="install.php?step=install" class="btn btn-primary">Retry Download</a>
+        <a href="install.php?step=database" class="btn btn-secondary">Back to Database Setup</a>
     </div>
 <?php else: ?>
     <div class="loading">

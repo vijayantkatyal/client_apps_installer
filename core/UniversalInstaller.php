@@ -31,7 +31,7 @@ class UniversalInstaller
 
     private function ensureDirectories()
     {
-        // Directories are now created in Dockerfile, so just check they exist
+        // Create required directories
         $dirs = [
             'storage',
             'storage/license',
@@ -41,9 +41,9 @@ class UniversalInstaller
         ];
 
         foreach ($dirs as $dir) {
-            if (!file_exists($this->basePath . $dir)) {
-                // Don't try to create, just log error
-                error_log("Directory not found: " . $this->basePath . $dir);
+            $fullPath = $this->basePath . $dir;
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
             }
         }
     }
@@ -187,6 +187,11 @@ class UniversalInstaller
 
     public function showSystemCheck()
     {
+        if (!isset($_SESSION['license_validated'])) {
+            header('Location: install.php?step=license_validation');
+            exit;
+        }
+
         $app = $this->getCurrentApp();
         if (!$app) {
             header('Location: install.php?step=app_selection');
@@ -204,22 +209,39 @@ class UniversalInstaller
 
     public function showLicenseValidation()
     {
+        // Temporarily disable access control for debugging
+        // if (!isset($_SESSION['license_validated'])) {
+        //     header('Location: install.php?step=license_validation');
+        //     exit;
+        // }
+
         $licenseValidator = new LicenseValidator();
         $storedLicense = $licenseValidator->getStoredLicense();
         $licenseError = $_SESSION['license_error'] ?? null;
         
         // Clear the error after displaying it
         unset($_SESSION['license_error']);
-
+        
         include $this->basePath . 'views/license_validation.php';
     }
 
     public function validateLicense($licenseKey)
     {
+        // Prevent infinite validation loops
+        if (isset($_SESSION['validation_attempted']) && time() - $_SESSION['validation_attempted'] < 30) {
+            return ['success' => false, 'error' => 'Please wait before trying again'];
+        }
+
         $licenseValidator = new LicenseValidator();
         $result = $licenseValidator->validate($licenseKey);
+        
+        // Mark validation attempt
+        $_SESSION['validation_attempted'] = time();
 
         if ($result['success']) {
+            // Clear validation flag on successful validation
+            unset($_SESSION['validation_attempted']);
+            
             $_SESSION['license_validated'] = true;
             $_SESSION['license_data'] = $result['data'];
             $_SESSION['license_key'] = $licenseKey;
@@ -271,8 +293,13 @@ class UniversalInstaller
 
     public function showDownloadProgress()
     {
-        if (!isset($_SESSION['license_validated']) || !isset($_SESSION['database_configured'])) {
-            header('Location: install.php?step=license');
+        if (!isset($_SESSION['license_validated'])) {
+            header('Location: install.php?step=license_validation');
+            exit;
+        }
+        
+        if (!isset($_SESSION['database_configured'])) {
+            header('Location: install.php?step=database');
             exit;
         }
 
@@ -286,8 +313,11 @@ class UniversalInstaller
             return ['success' => false, 'error' => 'Missing license or app selection'];
         }
 
+        // Mark that download is being attempted
+        $_SESSION['download_attempted'] = true;
+
         try {
-            $downloader = new RemoteDownloader($_SESSION['license_key'], $this->currentApp, $this->serversConfig);
+            $downloader = new RemoteDownloader($_SESSION['license_key'], $this->currentApp, $this->serversConfig, $this->basePath);
             $result = $downloader->downloadApplication();
 
             if ($result['success']) {
@@ -297,21 +327,24 @@ class UniversalInstaller
                 exit;
             } else {
                 $_SESSION['download_error'] = $result['error'];
-                header('Location: install.php?step=install');
-                exit;
+                return ['success' => false, 'error' => $result['error']];
             }
 
         } catch (Exception $e) {
             $_SESSION['download_error'] = $e->getMessage();
-            header('Location: install.php?step=install');
-            exit;
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
     public function showInstallationProgress()
     {
-        if (!isset($_SESSION['app_downloaded'])) {
-            header('Location: install.php?step=install');
+        if (!isset($_SESSION['license_validated'])) {
+            header('Location: install.php?step=license_validation');
+            exit;
+        }
+        
+        if (!isset($_SESSION['database_configured'])) {
+            header('Location: install.php?step=database');
             exit;
         }
 
@@ -321,11 +354,21 @@ class UniversalInstaller
 
     public function performInstallation($data)
     {
-        if (!isset($_SESSION['app_downloaded'])) {
-            return ['success' => false, 'error' => 'Application not downloaded'];
-        }
-
         try {
+            // First, download the application if not already downloaded
+            if (!isset($_SESSION['app_downloaded'])) {
+                $downloader = new RemoteDownloader($_SESSION['license_key'], $this->currentApp, $this->serversConfig, $this->basePath);
+                $result = $downloader->downloadApplication();
+
+                if ($result['success']) {
+                    $_SESSION['app_downloaded'] = true;
+                    $_SESSION['app_version'] = $result['version'];
+                } else {
+                    $_SESSION['download_error'] = $result['error'];
+                    return ['success' => false, 'error' => $result['error']];
+                }
+            }
+
             $app = $this->getCurrentApp();
             $installer = new InstallationProcess($app);
             $result = $installer->install($_SESSION['license_data'], $_SESSION['db_config'], $data);
@@ -346,14 +389,12 @@ class UniversalInstaller
                 exit;
             } else {
                 $_SESSION['install_error'] = $result['error'];
-                header('Location: install.php?step=install');
-                exit;
+                return ['success' => false, 'error' => $result['error']];
             }
 
         } catch (Exception $e) {
             $_SESSION['install_error'] = $e->getMessage();
-            header('Location: install.php?step=install');
-            exit;
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
@@ -383,7 +424,7 @@ class UniversalInstaller
             return ['success' => false, 'error' => 'Unknown application'];
         }
 
-        $updater = new AppUpdater($installInfo['app'], $installInfo['license_key'], $this->serversConfig);
+        $updater = new AppUpdater($installInfo['app'], $installInfo['license_key'], $this->serversConfig, $this->basePath);
         return $updater->checkForUpdates($installInfo['version']);
     }
 
@@ -395,7 +436,7 @@ class UniversalInstaller
 
         $installInfo = json_decode(file_get_contents($this->basePath . 'storage/install.lock'), true);
         
-        $updater = new AppUpdater($installInfo['app'], $installInfo['license_key'], $this->serversConfig);
+        $updater = new AppUpdater($installInfo['app'], $installInfo['license_key'], $this->serversConfig, $this->basePath);
         return $updater->update($installInfo['version']);
     }
     

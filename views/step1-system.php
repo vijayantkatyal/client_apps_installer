@@ -92,11 +92,11 @@
         
         <div class="text-center mt-20">
             <a href="install.php?step=database" class="btn btn-primary">Continue Anyway</a>
-            <a href="install.php?step=1" class="btn btn-secondary">Re-check</a>
+            <a href="install.php?step=system_check" class="btn btn-secondary">Re-check</a>
         </div>
     <?php else: ?>
         <div class="text-center mt-20">
-            <a href="install.php?step=1" class="btn btn-primary">Re-check Requirements</a>
+            <a href="install.php?step=system_check" class="btn btn-primary">Re-check Requirements</a>
         </div>
     <?php endif; ?>
 <?php endif; ?>

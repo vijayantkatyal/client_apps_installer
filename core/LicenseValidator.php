@@ -24,7 +24,7 @@ class LicenseValidator
         if (!$this->isValidFormat($licenseKey)) {
             return [
                 'success' => false,
-                'error' => 'Invalid license key format'
+                'error' => 'Invalid license key'
             ];
         }
 

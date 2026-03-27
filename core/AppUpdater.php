@@ -9,14 +9,17 @@ class AppUpdater
     private $tempDir;
     private $backupDir;
 
-    public function __construct($appId, $licenseKey, $serversConfig)
+    public function __construct($appId, $licenseKey, $serversConfig, $basePath = null)
     {
         $this->appId = $appId;
         $this->licenseKey = $licenseKey;
         $this->serversConfig = $serversConfig;
         $this->baseUrl = $serversConfig['base_url'] ?? '';
-        $this->tempDir = dirname(__DIR__) . '/storage/temp/';
-        $this->backupDir = dirname(__DIR__) . '/storage/backups/';
+        
+        // Use provided base path or default to core directory
+        $baseDir = $basePath ?? dirname(__DIR__);
+        $this->tempDir = $baseDir . '/storage/temp/';
+        $this->backupDir = $baseDir . '/storage/backups/';
         $this->ensureDirectories();
     }
 

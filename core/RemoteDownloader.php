@@ -9,13 +9,16 @@ class RemoteDownloader
     private $downloadToken;
     private $tempDir;
 
-    public function __construct($licenseKey, $appId, $serversConfig)
+    public function __construct($licenseKey, $appId, $serversConfig, $basePath = null)
     {
         $this->licenseKey = $licenseKey;
         $this->appId = $appId;
         $this->serversConfig = $serversConfig;
         $this->baseUrl = $serversConfig['base_url'] ?? '';
-        $this->tempDir = dirname(__DIR__) . '/storage/temp/';
+        
+        // Use provided base path or default to core directory
+        $baseDir = $basePath ?? dirname(__DIR__);
+        $this->tempDir = $baseDir . '/storage/temp/';
         $this->ensureTempDir();
     }
 

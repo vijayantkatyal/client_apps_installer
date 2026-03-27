@@ -113,7 +113,7 @@ $suggestedPassword = $database->generatePassword();
     <div class="text-center mt-20">
         <button type="button" onclick="testConnection()" class="btn btn-secondary">Test Connection</button>
         <button type="submit" class="btn btn-primary">Setup Database</button>
-        <a href="install.php?step=2" class="btn btn-secondary">Back</a>
+        <a href="install.php?step=license_validation" class="btn btn-secondary">Back</a>
     </div>
 </form>
 

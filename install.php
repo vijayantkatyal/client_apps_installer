@@ -84,10 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         case 'remove_license':
             $result = $installer->removeStoredLicense();
             if ($result['success']) {
-                header('Location: install.php?step=license_validation');
+                header('Location: install.php?step=license');
             } else {
                 $_SESSION['license_error'] = $result['error'];
-                header('Location: install.php?step=license_validation');
+                header('Location: install.php?step=license');
             }
             exit;
     }
@@ -101,7 +101,7 @@ switch ($step) {
     case 'system_check':
         $installer->showSystemCheck();
         break;
-    case 'license':
+    case 'license_validation':
         $installer->showLicenseValidation();
         break;
     case 'database':
