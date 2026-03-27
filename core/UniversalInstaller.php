@@ -317,7 +317,7 @@ class UniversalInstaller
         $_SESSION['download_attempted'] = true;
 
         try {
-            $downloader = new RemoteDownloader($_SESSION['license_key'], $this->currentApp, $this->serversConfig, $this->basePath);
+            $downloader = new RemoteDownloader($_SESSION['license_key'], $_SESSION['selected_app'], $this->serversConfig, $this->basePath);
             $result = $downloader->downloadApplication();
 
             if ($result['success']) {
@@ -357,7 +357,7 @@ class UniversalInstaller
         try {
             // First, download the application if not already downloaded
             if (!isset($_SESSION['app_downloaded'])) {
-                $downloader = new RemoteDownloader($_SESSION['license_key'], $this->currentApp, $this->serversConfig, $this->basePath);
+                $downloader = new RemoteDownloader($_SESSION['license_key'], $_SESSION['selected_app'], $this->serversConfig, $this->basePath);
                 $result = $downloader->downloadApplication();
 
                 if ($result['success']) {

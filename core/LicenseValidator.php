@@ -169,9 +169,20 @@ class LicenseValidator
         }
 
         if (!$result['valid']) {
+            $errorMessage = $result['error'] ?? 'License key is invalid or expired';
+            
+            // Provide user-friendly message for common errors
+            if (strpos($errorMessage, 'License Already Active') !== false) {
+                $errorMessage = 'This license is already activated on another domain. Please contact support to transfer the license or use a different license key.';
+            } elseif (strpos($errorMessage, 'License domain mismatch') !== false) {
+                $errorMessage = 'This license is already activated on a different domain. Please contact support for assistance.';
+            } elseif (strpos($errorMessage, 'License expired') !== false) {
+                $errorMessage = 'This license has expired. Please renew your license to continue.';
+            }
+            
             return [
                 'success' => false,
-                'error' => $result['error'] ?? 'License key is invalid or expired'
+                'error' => $errorMessage
             ];
         }
 

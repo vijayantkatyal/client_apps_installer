@@ -85,16 +85,26 @@ class RemoteDownloader
             'action' => 'get_download_token'
         ];
 
+        // Debug logging
+        error_log("RemoteDownloader: Getting download token");
+        error_log("RemoteDownloader: Endpoint: " . $this->baseUrl . $endpoint);
+        error_log("RemoteDownloader: Request data: " . json_encode($data));
+
         $response = $this->makeRequest($endpoint, $data);
 
+        error_log("RemoteDownloader: Response: " . json_encode($response));
+
         if (!$response['success']) {
+            error_log("RemoteDownloader: Failed to get download token: " . $response['error']);
             return ['success' => false, 'error' => 'Failed to get download token: ' . $response['error']];
         }
 
         if (!isset($response['data']['token'])) {
+            error_log("RemoteDownloader: Invalid download token response - missing token");
             return ['success' => false, 'error' => 'Invalid download token response'];
         }
 
+        error_log("RemoteDownloader: Successfully obtained download token");
         return ['success' => true, 'token' => $response['data']['token']];
     }
 
@@ -109,18 +119,32 @@ class RemoteDownloader
             'action' => 'get_download_url'
         ];
 
+        // Debug logging
+        error_log("RemoteDownloader: Getting download URL");
+        error_log("RemoteDownloader: Endpoint: " . $this->baseUrl . $endpoint);
+        error_log("RemoteDownloader: Request data: " . json_encode($data));
+
         $response = $this->makeRequest($endpoint, $data);
 
+        error_log("RemoteDownloader: Response: " . json_encode($response));
+
         if (!$response['success']) {
+            error_log("RemoteDownloader: Failed to get download URL: " . $response['error']);
             return ['success' => false, 'error' => 'Failed to get download URL: ' . $response['error']];
         }
 
         $required = ['url', 'filename', 'checksum', 'version'];
         foreach ($required as $field) {
             if (!isset($response['data'][$field])) {
+                error_log("RemoteDownloader: Missing required field: $field");
                 return ['success' => false, 'error' => "Missing required field: $field"];
             }
         }
+
+        error_log("RemoteDownloader: Successfully obtained download URL");
+        error_log("RemoteDownloader: Download URL: " . $response['data']['url']);
+        error_log("RemoteDownloader: Filename: " . $response['data']['filename']);
+        error_log("RemoteDownloader: Version: " . $response['data']['version']);
 
         return [
             'success' => true,
