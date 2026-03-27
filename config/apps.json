@@ -1,126 +1,50 @@
 {
   "vidpowr": {
-    "uid": 2,
     "name": "VidPowr",
     "description": "Professional video hosting and streaming platform",
-    "version": "2.1.0",
-    "license_server": "https://api.example.com",
-    "release_server": "https://releases.vidpowr.net",
-    "website": "https://vidpowr.net",
     "icon": "🎬",
-    "category": "video",
     "requirements": {
       "php": "^8.0",
       "extensions": ["mysqli", "pdo", "pdo_mysql", "gd", "zip", "bcmath", "curl", "json", "mbstring", "openssl", "tokenizer", "xml"],
       "database": "mysql",
       "memory_limit": "256M",
       "disk_space": "2GB"
-    },
-    "post_install": {
-      "migrations": true,
-      "seeders": ["AdminSeeder", "SettingsSeeder", "VideoSeeder"],
-      "commands": ["key:generate", "storage:link", "config:cache", "route:cache"],
-      "permissions": [
-        "storage",
-        "bootstrap/cache"
-      ]
-    },
-    "features": {
-      "normal": ["video_upload", "basic_analytics", "embed_player"],
-      "agency": ["video_upload", "advanced_analytics", "embed_player", "api_access", "white_label", "multi_domain"]
     }
   },
   "feedplay": {
-    "uid": 6,
     "name": "FeedPlay",
     "description": "RSS feed and podcast management platform",
-    "version": "1.8.0",
-    "license_server": "https://api.example.com",
-    "release_server": "https://releases.feedplay.net",
-    "website": "https://feedplay.net",
     "icon": "🎵",
-    "category": "podcast",
     "requirements": {
       "php": "^8.0",
       "extensions": ["mysqli", "pdo", "pdo_mysql", "gd", "zip", "curl", "json", "mbstring", "openssl", "xml"],
       "database": "mysql",
       "memory_limit": "128M",
       "disk_space": "1GB"
-    },
-    "post_install": {
-      "migrations": true,
-      "seeders": ["AdminSeeder", "FeedSeeder", "PodcastSeeder"],
-      "commands": ["key:generate", "storage:link", "config:cache"],
-      "permissions": [
-        "storage",
-        "bootstrap/cache"
-      ]
-    },
-    "features": {
-      "normal": ["rss_feeds", "podcast_hosting", "basic_analytics"],
-      "agency": ["rss_feeds", "podcast_hosting", "advanced_analytics", "api_access", "multi_channel", "white_label"]
     }
   },
   "vidchapter": {
-    "uid": 8,
     "name": "VidChapter",
     "description": "Video chaptering and timestamp management platform",
-    "version": "1.5.0",
-    "license_server": "https://api.example.com",
-    "release_server": "https://releases.vidchapter.net",
-    "website": "https://vidchapter.net",
-    "icon": "�",
-    "category": "video",
+    "icon": "📖",
     "requirements": {
       "php": "^8.0",
       "extensions": ["mysqli", "pdo", "pdo_mysql", "gd", "zip", "curl", "json", "mbstring", "openssl", "tokenizer"],
       "database": "mysql",
       "memory_limit": "256M",
       "disk_space": "1.5GB"
-    },
-    "post_install": {
-      "migrations": true,
-      "seeders": ["AdminSeeder", "ChapterSeeder", "VideoSeeder"],
-      "commands": ["key:generate", "storage:link", "config:cache"],
-      "permissions": [
-        "storage",
-        "bootstrap/cache"
-      ]
-    },
-    "features": {
-      "normal": ["chapter_creation", "timestamp_management", "basic_analytics"],
-      "agency": ["chapter_creation", "timestamp_management", "advanced_analytics", "api_access", "bulk_processing", "white_label"]
     }
   },
   "vidtags": {
-    "uid": 4,
     "name": "VidTags",
     "description": "Video tagging and metadata management platform",
-    "version": "1.3.0",
-    "license_server": "https://api.example.com",
-    "release_server": "https://releases.vidtags.net",
-    "website": "https://vidtags.net",
     "icon": "🏷️",
-    "category": "video",
     "requirements": {
       "php": "^8.0",
       "extensions": ["mysqli", "pdo", "pdo_mysql", "gd", "zip", "curl", "json", "mbstring", "openssl", "tokenizer"],
       "database": "mysql",
       "memory_limit": "256M",
       "disk_space": "1GB"
-    },
-    "post_install": {
-      "migrations": true,
-      "seeders": ["AdminSeeder", "TagSeeder", "VideoSeeder"],
-      "commands": ["key:generate", "storage:link", "config:cache"],
-      "permissions": [
-        "storage",
-        "bootstrap/cache"
-      ]
-    },
-    "features": {
-      "normal": ["tag_management", "metadata_editing", "search_functionality"],
-      "agency": ["tag_management", "metadata_editing", "advanced_search", "api_access", "bulk_tagging", "auto_tagging"]
     }
   }
 }
