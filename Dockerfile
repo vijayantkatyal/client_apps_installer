@@ -5,15 +5,24 @@ WORKDIR /var/www/html
 
 # Install system dependencies (using Alpine approach)
 RUN apt-get update && apt-get install -y \
+    libzip-dev \
     curl \
     unzip \
     zip \
     git \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure GD (important for jpeg + freetype)
+RUN docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg
+
 # Install PHP extensions (single command like reference)
-RUN docker-php-ext-install mysqli pdo pdo_mysql bcmath
+RUN docker-php-ext-install mysqli pdo pdo_mysql bcmath zip gd
 
 # Enable Apache modules
 RUN a2enmod rewrite
