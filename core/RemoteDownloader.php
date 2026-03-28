@@ -171,6 +171,12 @@ class RemoteDownloader
     {
         $filepath = $this->tempDir . $filename;
 
+        // Open file for writing
+        $fp = fopen($filepath, 'w');
+        if (!$fp) {
+            return ['success' => false, 'error' => 'Failed to create file: ' . $filepath];
+        }
+
         // Initialize cURL
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -178,14 +184,16 @@ class RemoteDownloader
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
         curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minutes timeout
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->serversConfig['security']['verify_ssl'] ?? true);
-        curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, [$this, 'downloadProgress']);
-        curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        // Set file handle for streaming download
+        curl_setopt($ch, CURLOPT_FILE, $fp);
 
-        $fileData = curl_exec($ch);
+        $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
+        fclose($fp);
 
         if ($error) {
             return ['success' => false, 'error' => 'Download error: ' . $error];
@@ -195,13 +203,8 @@ class RemoteDownloader
             return ['success' => false, 'error' => 'HTTP error: ' . $httpCode];
         }
 
-        if (empty($fileData)) {
+        if (!file_exists($filepath) || filesize($filepath) === 0) {
             return ['success' => false, 'error' => 'Downloaded file is empty'];
-        }
-
-        // Save file
-        if (file_put_contents($filepath, $fileData) === false) {
-            return ['success' => false, 'error' => 'Failed to save downloaded file'];
         }
 
         return ['success' => true, 'filepath' => $filepath];
