@@ -367,35 +367,56 @@ class RemoteDownloader
 
     private function installComposerDependencies($extractPath)
     {
-        error_log("Installing Composer dependencies...");
+        $this->logMessage("Installing Composer dependencies...");
         
         // Check if composer.json exists
         if (!file_exists($extractPath . '/composer.json')) {
             return ['success' => false, 'error' => 'composer.json not found in extracted files'];
         }
 
+        // Check if composer is available in PATH
+        $composerAvailable = shell_exec('which composer') !== null;
+        $composerPath = $composerAvailable ? 'composer' : '/usr/local/bin/composer';
+        
         // Install composer if not available
-        $composerPath = '/usr/local/bin/composer';
-        if (!file_exists($composerPath)) {
-            error_log("Composer not found, installing...");
-            $installCmd = "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer";
-            $installOutput = shell_exec($installCmd);
-            error_log("Composer install output: " . $installOutput);
+        if (!$composerAvailable && !file_exists($composerPath)) {
+            $this->logMessage("Composer not found, installing...");
+            
+            // Create temp directory for composer installation
+            $tempDir = sys_get_temp_dir() . '/composer_install';
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            // Download and install composer
+            $installerPath = $tempDir . '/composer-setup.php';
+            $downloadCmd = "curl -sS https://getcomposer.org/installer > $installerPath";
+            shell_exec($downloadCmd);
+            
+            if (file_exists($installerPath)) {
+                $installCmd = "php $installerPath --install-dir=/usr/local/bin --filename=composer";
+                $installOutput = shell_exec($installCmd);
+                $this->logMessage("Composer install output: " . $installOutput);
+                
+                // Cleanup
+                unlink($installerPath);
+                rmdir($tempDir);
+            }
         }
 
-        // Install dependencies
-        $composerCommand = "cd $extractPath && /usr/local/bin/composer install --no-dev --optimize-autoloader 2>&1";
-        $output = shell_exec($composerCommand);
+        // Install dependencies with proper error handling
+        $composerCommand = "cd $extractPath && " . ($composerAvailable ? 'composer' : $composerPath) . " install --no-dev --optimize-autoloader --no-interaction 2>&1";
+        $this->logMessage("Running composer command: " . $composerCommand);
         
-        error_log("Composer install output: " . $output);
+        $output = shell_exec($composerCommand);
+        $this->logMessage("Composer install output: " . $output);
         
         // Check if vendor directory was created
         if (!file_exists($extractPath . '/vendor/autoload.php')) {
             return ['success' => false, 'error' => 'Failed to install Composer dependencies. Output: ' . $output];
         }
 
-        error_log("Composer dependencies installed successfully");
-        return ['success' => true];
+        return ['success' => true, 'message' => 'Composer dependencies installed successfully'];
     }
 
     private function generateApplicationKey($extractPath)

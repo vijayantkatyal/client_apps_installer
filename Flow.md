@@ -6,4 +6,7 @@
 
 > sudo apt-get update && sudo apt-get install -y php-curl
 
-- file permissions issue, curl issue (on installer)
+installer
+- file / folder permissions issue
+- curl issue (on installer)
+- composer issue (on installer)
