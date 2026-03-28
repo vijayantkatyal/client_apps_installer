@@ -11,3 +11,9 @@ installer
 - curl issue (on installer)
 - composer issue (on installer)
 - php rewrite module issue
+
+- APP_URL (full url)
+- ASSET_URL (full url)
+
+redirect to: route: /index.php/login
+default email, password show to user after installation
