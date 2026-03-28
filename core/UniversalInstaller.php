@@ -31,7 +31,7 @@ class UniversalInstaller
 
     private function ensureDirectories()
     {
-        // Create required directories
+        // Create required directories with proper permissions
         $dirs = [
             'storage',
             'storage/license',
@@ -43,7 +43,28 @@ class UniversalInstaller
         foreach ($dirs as $dir) {
             $fullPath = $this->basePath . $dir;
             if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                error_log("Attempting to create directory: $fullPath");
+                
+                // Try PHP mkdir first
+                if (!mkdir($fullPath, 0777, true)) {
+                    error_log("PHP mkdir failed, trying shell command");
+                    
+                    // Try with shell command
+                    $output = shell_exec("mkdir -p '$fullPath' 2>&1");
+                    error_log("Shell mkdir output: $output");
+                    
+                    if (file_exists($fullPath)) {
+                        shell_exec("chmod 777 '$fullPath'");
+                        error_log("Directory created successfully with shell command");
+                    } else {
+                        error_log("Failed to create directory: $fullPath");
+                        // Continue anyway - some directories might exist or be created later
+                    }
+                } else {
+                    error_log("Directory created with PHP mkdir: $fullPath");
+                }
+            } else {
+                error_log("Directory already exists: $fullPath");
             }
         }
     }

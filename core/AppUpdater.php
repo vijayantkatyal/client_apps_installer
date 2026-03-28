@@ -398,7 +398,11 @@ class AppUpdater
         
         foreach ($dirs as $dir) {
             if (!file_exists($dir)) {
-                mkdir($dir, 0755, true);
+                if (!mkdir($dir, 0777, true)) {
+                    // Try with shell command if PHP mkdir fails
+                    shell_exec("mkdir -p $dir");
+                    shell_exec("chmod 777 $dir");
+                }
             }
         }
     }
