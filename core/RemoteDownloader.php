@@ -317,8 +317,24 @@ class RemoteDownloader
             
             // Extract individual file with proper permissions
             if (!$zip->extractTo($extractPath, $filename)) {
-                error_log("RemoteDownloader: Failed to extract file: $filename to $extractPath");
-                return ['success' => false, 'error' => "Failed to extract file: $filename"];
+                // Log warning but don't fail for non-critical files (like docker files)
+                $criticalFiles = ['artisan', 'composer.json', 'app/', 'bootstrap/', 'config/', 'database/', 'public/', 'resources/', 'routes/', 'storage/', 'vendor/'];
+                $isCritical = false;
+                
+                foreach ($criticalFiles as $critical) {
+                    if (strpos($filename, $critical) === 0) {
+                        $isCritical = true;
+                        break;
+                    }
+                }
+                
+                if ($isCritical) {
+                    $this->logMessage("Failed to extract critical file: $filename");
+                    return ['success' => false, 'error' => "Failed to extract critical file: $filename"];
+                } else {
+                    $this->logMessage("Warning: Failed to extract non-critical file: $filename (continuing)");
+                    continue;
+                }
             }
         }
 

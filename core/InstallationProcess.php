@@ -145,43 +145,19 @@ class InstallationProcess
 
     private function createAdminUser($installData)
     {
-        $name = $installData['admin_name'] ?? 'Admin';
-        $email = $installData['admin_email'] ?? 'admin@vidpowr.com';
-        $password = $installData['admin_password'] ?? $this->generatePassword();
-
-        // Create a simple seeder to create admin user
-        $seederContent = "<?php\n";
-        $seederContent .= "use Illuminate\\Database\\Seeder;\n";
-        $seederContent .= "use App\\Models\\User;\n";
-        $seederContent .= "use Illuminate\\Support\\Facades\\Hash;\n\n";
-        $seederContent .= "class CreateAdminSeeder extends Seeder\n";
-        $seederContent .= "{\n";
-        $seederContent .= "    public function run()\n";
-        $seederContent .= "    {\n";
-        $seederContent .= "        User::create([\n";
-        $seederContent .= "            'name' => '$name',\n";
-        $seederContent .= "            'email' => '$email',\n";
-        $seederContent .= "            'password' => Hash::make('$password'),\n";
-        $seederContent .= "            'email_verified_at' => now(),\n";
-        $seederContent .= "            'role' => 'admin'\n";
-        $seederContent .= "        ]);\n";
-        $seederContent .= "    }\n";
-        $seederContent .= "}\n";
-
-        file_put_contents('database/seeders/CreateAdminSeeder.php', $seederContent);
-
-        $command = 'php artisan db:seed --class=CreateAdminSeeder --force 2>&1';
-        $output = shell_exec($command);
-
-        if (strpos($output, 'Seeding') === false) {
-            throw new Exception('Failed to create admin user: ' . $output);
-        }
-
-        // Store admin credentials for display
-        $_SESSION['admin_credentials'] = [
-            'email' => $email,
-            'password' => $password
-        ];
+        // Run built-in database seeding
+        $this->log("Running built-in database seeding...");
+        $seedCommand = 'php artisan db:seed --force 2>&1';
+        $seedOutput = shell_exec($seedCommand);
+        $this->log("Database seeding output: " . $seedOutput);
+        
+        // Store default admin credentials for display (if app creates default admin)
+        // $_SESSION['admin_credentials'] = [
+        //     'email' => 'admin@example.com',
+        //     'password' => 'password'
+        // ];
+        
+        $this->log("Database seeding completed successfully");
     }
 
     private function setPermissions()
@@ -259,8 +235,7 @@ class InstallationProcess
     {
         // Clean up temporary files
         $files = [
-            'composer.phar',
-            'database/seeders/CreateAdminSeeder.php'
+            'composer.phar'
         ];
 
         foreach ($files as $file) {

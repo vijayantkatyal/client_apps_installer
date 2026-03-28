@@ -10,3 +10,4 @@ installer
 - file / folder permissions issue
 - curl issue (on installer)
 - composer issue (on installer)
+- php rewrite module issue
