@@ -480,14 +480,14 @@ class RemoteDownloader
     private function moveInstallerFiles()
     {
         $baseDir = dirname(__DIR__);
-        $tmpInstallDir = $baseDir . '/tmp_install/';
+        $backupDir = $baseDir . '/installer_backup/';
         
-        // Create tmp_install directory if it doesn't exist
-        if (!file_exists($tmpInstallDir)) {
-            mkdir($tmpInstallDir, 0755, true);
+        // Create backup directory if it doesn't exist
+        if (!file_exists($backupDir)) {
+            mkdir($backupDir, 0755, true);
         }
 
-        // Files to move (installer-specific files)
+        // Files to backup (installer-specific files)
         $installerFiles = [
             'install.php',
             'Installer.php',
@@ -502,7 +502,7 @@ class RemoteDownloader
 
         foreach ($installerFiles as $file) {
             $source = $baseDir . '/' . $file;
-            $destination = $tmpInstallDir . $file;
+            $destination = $backupDir . $file;
             
             if (file_exists($source)) {
                 if (is_dir($source)) {
@@ -512,6 +512,8 @@ class RemoteDownloader
                 }
             }
         }
+        
+        $this->logMessage("Installer files backed up to: " . $backupDir);
     }
 
     private function copyDirectory($source, $destination)
