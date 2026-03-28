@@ -24,54 +24,87 @@ class RemoteDownloader
 
     public function downloadApplication()
     {
+        error_log("RemoteDownloader: Starting application download process for app ID: {$this->appId}");
+        
         try {
             // Step 1: Get download token
+            error_log("RemoteDownloader: Step 1 - Getting download token");
             $token = $this->getDownloadToken();
             if (!$token['success']) {
+                error_log("RemoteDownloader: Step 1 failed - {$token['error']}");
                 return ['success' => false, 'error' => $token['error']];
             }
 
             $this->downloadToken = $token['token'];
+            error_log("RemoteDownloader: Step 1 completed successfully - Download token obtained");
 
             // Step 2: Get download URL
+            error_log("RemoteDownloader: Step 2 - Getting download URL");
             $downloadInfo = $this->getDownloadUrl();
             if (!$downloadInfo['success']) {
+                error_log("RemoteDownloader: Step 2 failed - {$downloadInfo['error']}");
                 return ['success' => false, 'error' => $downloadInfo['error']];
             }
 
+            error_log("RemoteDownloader: Step 2 completed successfully - Download URL obtained for version: {$downloadInfo['version']}");
+
             // Step 3: Download the file
+            error_log("RemoteDownloader: Step 3 - Downloading file: {$downloadInfo['filename']}");
             $downloadResult = $this->downloadFile($downloadInfo['url'], $downloadInfo['filename']);
             if (!$downloadResult['success']) {
+                error_log("RemoteDownloader: Step 3 failed - {$downloadResult['error']}");
                 return ['success' => false, 'error' => $downloadResult['error']];
             }
 
+            error_log("RemoteDownloader: Step 3 completed successfully - File downloaded to: {$downloadResult['filepath']}");
+
             // Step 4: Verify integrity
+            error_log("RemoteDownloader: Step 4 - Verifying file integrity");
             $verifyResult = $this->verifyFileIntegrity($downloadResult['filepath'], $downloadInfo['checksum']);
             if (!$verifyResult['success']) {
+                error_log("RemoteDownloader: Step 4 failed - {$verifyResult['error']}");
                 return ['success' => false, 'error' => $verifyResult['error']];
             }
 
+            error_log("RemoteDownloader: Step 4 completed successfully - File integrity verified");
+
             // Step 5: Extract files
+            error_log("RemoteDownloader: Step 5 - Extracting files");
             $extractResult = $this->extractFiles($downloadResult['filepath']);
             if (!$extractResult['success']) {
+                error_log("RemoteDownloader: Step 5 failed - {$extractResult['error']}");
                 return ['success' => false, 'error' => $extractResult['error']];
             }
 
+            error_log("RemoteDownloader: Step 5 completed successfully - Files extracted to: {$extractResult['extracted_to']}");
+
             // Step 6: Install composer dependencies
+            error_log("RemoteDownloader: Step 6 - Installing Composer dependencies");
             $composerResult = $this->installComposerDependencies($extractResult['extracted_to']);
             if (!$composerResult['success']) {
+                error_log("RemoteDownloader: Step 6 failed - {$composerResult['error']}");
                 return ['success' => false, 'error' => $composerResult['error']];
             }
 
+            error_log("RemoteDownloader: Step 6 completed successfully - Composer dependencies installed");
+
             // Step 7: Generate application key
+            error_log("RemoteDownloader: Step 7 - Generating application key");
             $keyResult = $this->generateApplicationKey($extractResult['extracted_to']);
             if (!$keyResult['success']) {
+                error_log("RemoteDownloader: Step 7 failed - {$keyResult['error']}");
                 return ['success' => false, 'error' => $keyResult['error']];
             }
 
-            // Step 8: Clean up
-            $this->cleanup($downloadResult['filepath']);
+            error_log("RemoteDownloader: Step 7 completed successfully - Application key generated");
 
+            // Step 8: Clean up
+            error_log("RemoteDownloader: Step 8 - Cleaning up temporary files");
+            $this->cleanup($downloadResult['filepath']);
+            error_log("RemoteDownloader: Step 8 completed successfully - Cleanup finished");
+
+            error_log("RemoteDownloader: Application download and installation completed successfully for app ID: {$this->appId}, version: {$downloadInfo['version']}");
+            
             return [
                 'success' => true,
                 'message' => 'Application downloaded and installed successfully',
@@ -79,6 +112,8 @@ class RemoteDownloader
             ];
 
         } catch (Exception $e) {
+            error_log("RemoteDownloader: Critical error in download process - " . $e->getMessage());
+            error_log("RemoteDownloader: Exception details - File: {$e->getFile()}, Line: {$e->getLine()}");
             return [
                 'success' => false,
                 'error' => 'Download failed: ' . $e->getMessage()
