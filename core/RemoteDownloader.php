@@ -365,58 +365,53 @@ class RemoteDownloader
         return ['success' => true, 'data' => $data];
     }
 
+    private function getAppRequirements()
+    {
+        // Get current app configuration
+        if (isset($this->appId) && isset($this->appsConfig[$this->appId])) {
+            return $this->appsConfig[$this->appId]['requirements'] ?? [];
+        }
+        
+        // Default requirements if app config not available
+        return [
+            'php' => '^8.0',
+            'extensions' => ['mysqli', 'pdo', 'pdo_mysql', 'gd', 'zip', 'bcmath', 'curl', 'json', 'mbstring', 'openssl', 'tokenizer', 'xml'],
+            'memory_limit' => '256M'
+        ];
+    }
+
+    private function removeDirectory($dir)
+    {
+        if (!file_exists($dir)) {
+            return;
+        }
+        
+        if (is_dir($dir)) {
+            $files = array_diff(scandir($dir), ['.', '..']);
+            foreach ($files as $file) {
+                $path = $dir . '/' . $file;
+                if (is_dir($path)) {
+                    $this->removeDirectory($path);
+                } else {
+                    unlink($path);
+                }
+            }
+            rmdir($dir);
+        }
+    }
+
     private function installComposerDependencies($extractPath)
     {
-        $this->logMessage("Installing Composer dependencies...");
+        $this->logMessage("Checking for vendor directory...");
         
-        // Check if composer.json exists
-        if (!file_exists($extractPath . '/composer.json')) {
-            return ['success' => false, 'error' => 'composer.json not found in extracted files'];
+        // Check if vendor directory already exists in the extracted files
+        $vendorPath = $extractPath . '/vendor/autoload.php';
+        if (file_exists($vendorPath)) {
+            $this->logMessage("Found existing vendor directory - using bundled dependencies");
+            return ['success' => true, 'message' => 'Using existing vendor directory'];
+        } else {
+            return ['success' => false, 'error' => 'Vendor directory not found in extracted files. Please ensure the application package includes the vendor directory.'];
         }
-
-        // Check if composer is available in PATH
-        $composerAvailable = shell_exec('which composer') !== null;
-        $composerPath = $composerAvailable ? 'composer' : '/usr/local/bin/composer';
-        
-        // Install composer if not available
-        if (!$composerAvailable && !file_exists($composerPath)) {
-            $this->logMessage("Composer not found, installing...");
-            
-            // Create temp directory for composer installation
-            $tempDir = sys_get_temp_dir() . '/composer_install';
-            if (!is_dir($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-            
-            // Download and install composer
-            $installerPath = $tempDir . '/composer-setup.php';
-            $downloadCmd = "curl -sS https://getcomposer.org/installer > $installerPath";
-            shell_exec($downloadCmd);
-            
-            if (file_exists($installerPath)) {
-                $installCmd = "php $installerPath --install-dir=/usr/local/bin --filename=composer";
-                $installOutput = shell_exec($installCmd);
-                $this->logMessage("Composer install output: " . $installOutput);
-                
-                // Cleanup
-                unlink($installerPath);
-                rmdir($tempDir);
-            }
-        }
-
-        // Install dependencies with proper error handling
-        $composerCommand = "cd $extractPath && " . ($composerAvailable ? 'composer' : $composerPath) . " install --no-dev --optimize-autoloader --no-interaction 2>&1";
-        $this->logMessage("Running composer command: " . $composerCommand);
-        
-        $output = shell_exec($composerCommand);
-        $this->logMessage("Composer install output: " . $output);
-        
-        // Check if vendor directory was created
-        if (!file_exists($extractPath . '/vendor/autoload.php')) {
-            return ['success' => false, 'error' => 'Failed to install Composer dependencies. Output: ' . $output];
-        }
-
-        return ['success' => true, 'message' => 'Composer dependencies installed successfully'];
     }
 
     private function generateApplicationKey($extractPath)
