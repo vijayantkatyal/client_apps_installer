@@ -5,3 +5,5 @@
 > open install/install.php in browser
 
 > sudo apt-get update && sudo apt-get install -y php-curl
+
+- file permissions issue, curl issue (on installer)
