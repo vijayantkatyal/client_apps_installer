@@ -330,11 +330,9 @@ class InstallationProcess
 
     private function createAdminUser($installData)
     {
-        // Run built-in database seeding with specific class to avoid duplicates
-        $this->log("Running built-in database seeding...");
-        $seedCommand = 'php artisan db:seed --class=DatabaseSeeder --force 2>&1';
-        $seedOutput = shell_exec($seedCommand);
-        $this->log("Database seeding output: " . $seedOutput);
+        // Skip built-in database seeding to avoid duplicate admin user issues
+        // The application can handle its own admin user creation after installation
+        $this->log("Built-in database seeding skipped to avoid conflicts");
         
         // Store default admin credentials for display (if app creates default admin)
         // $_SESSION['admin_credentials'] = [
