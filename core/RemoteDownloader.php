@@ -350,6 +350,24 @@ class RemoteDownloader
 
         $zip->close();
 
+        // Verify critical files were extracted
+        $criticalFiles = ['artisan', 'composer.json', 'app/', 'bootstrap/', 'config/', 'database/', 'public/', 'resources/', 'routes/', 'storage/'];
+        $missingFiles = [];
+        
+        foreach ($criticalFiles as $critical) {
+            $path = $extractPath . '/' . $critical;
+            if (!file_exists($path)) {
+                $missingFiles[] = $critical;
+            }
+        }
+        
+        if (!empty($missingFiles)) {
+            return [
+                'success' => false, 
+                'error' => "Critical files missing after extraction: " . implode(', ', $missingFiles) . ". The download may be corrupted or incomplete."
+            ];
+        }
+
         return ['success' => true, 'extracted_to' => $extractPath];
     }
 

@@ -155,6 +155,17 @@ class InstallationProcess
             }
         }
         
+        // Check if artisan file exists
+        $artisanFile = $this->basePath . 'artisan';
+        if (!file_exists($artisanFile)) {
+            throw new Exception('Artisan file not found. The application download may be incomplete. Please try downloading again.');
+        }
+        
+        // Make sure artisan is executable
+        if (!is_executable($artisanFile)) {
+            chmod($artisanFile, 0755);
+        }
+        
         $command = 'php artisan key:generate --force 2>&1';
         $output = shell_exec($command);
         
