@@ -207,9 +207,37 @@ class DatabaseSetup
         }
     }
 
+    private function detectAppUrl()
+    {
+        $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        
+        // Get the request URI and remove query string
+        $requestUri = $_SERVER['REQUEST_URI'];
+        $requestUri = explode('?', $requestUri)[0];
+        
+        // Remove the installer script name from the path
+        $requestUri = str_replace('/index.php', '', $requestUri);
+        $requestUri = str_replace('/install.php', '', $requestUri);
+        $requestUri = str_replace('/install', '', $requestUri);
+        
+        // Remove trailing slash if present
+        $requestUri = rtrim($requestUri, '/');
+        
+        // Build the full URL
+        $appUrl = $scheme . '://' . $host . $requestUri;
+        
+        // If requestUri is empty, it means we're at root
+        if (empty($requestUri)) {
+            $appUrl = $scheme . '://' . $host;
+        }
+        
+        return $appUrl;
+    }
+
     private function generateEnvContent($config, $licenseData)
     {
-        $appUrl = 'http://' . $_SERVER['HTTP_HOST'];
+        $appUrl = $this->detectAppUrl();
         $appKey = 'base64:' . base64_encode(random_bytes(32));
 
         $content = <<<ENV
@@ -218,6 +246,7 @@ APP_ENV=production
 APP_KEY={$appKey}
 APP_DEBUG=false
 APP_URL={$appUrl}
+ASSET_URL={$appUrl}/public
 
 LOG_CHANNEL=stack
 LOG_LEVEL=error
