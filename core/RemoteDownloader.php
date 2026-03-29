@@ -521,15 +521,29 @@ class RemoteDownloader
             $destination = $backupDir . $file;
             
             if (file_exists($source)) {
+                // Backup the file/directory
                 if (is_dir($source)) {
                     $this->copyDirectory($source, $destination);
                 } else {
                     copy($source, $destination);
                 }
+                
+                // Remove the original file/directory after successful backup
+                try {
+                    if (is_dir($source)) {
+                        $this->removeDirectory($source);
+                    } else {
+                        unlink($source);
+                    }
+                    $this->logMessage("Removed original: " . $file);
+                } catch (Exception $e) {
+                    $this->logMessage("Warning: Could not remove " . $file . ": " . $e->getMessage());
+                }
             }
         }
         
         $this->logMessage("Installer files backed up to: " . $backupDir);
+        $this->logMessage("Original installer files removed successfully");
     }
 
     private function copyDirectory($source, $destination)
