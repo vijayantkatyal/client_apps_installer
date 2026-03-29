@@ -56,78 +56,58 @@ class RemoteDownloader
                 return ['success' => false, 'error' => $downloadInfo['error']];
             }
 
-            $this->logMessage("Step 2 completed successfully - Download URL obtained for version: {$downloadInfo['version']}");
+            $this->logMessage("Download URL obtained successfully");
+            $this->logMessage("Application version: " . $downloadInfo['version']);
+            $this->logMessage("Starting file download...");
 
-            // Step 3: Download the file
-            $this->logMessage("Step 3 - Downloading file: {$downloadInfo['filename']}");
+            // Download the file
             $downloadResult = $this->downloadFile($downloadInfo['url'], $downloadInfo['filename']);
+            
             if (!$downloadResult['success']) {
-                $this->logMessage("Step 3 failed - {$downloadResult['error']}");
+                $this->logMessage("Download failed: " . $downloadResult['error']);
                 return ['success' => false, 'error' => $downloadResult['error']];
             }
 
-            $this->logMessage("Step 3 completed successfully - File downloaded to: {$downloadResult['filepath']}");
+            $this->logMessage("File downloaded successfully: " . $downloadInfo['filename']);
 
-            // Step 4: Verify integrity
-            $this->logMessage("Step 4 - Verifying file integrity");
-            $verifyResult = $this->verifyFileIntegrity($downloadResult['filepath'], $downloadInfo['checksum']);
-            if (!$verifyResult['success']) {
-                $this->logMessage("Step 4 failed - {$verifyResult['error']}");
-                return ['success' => false, 'error' => $verifyResult['error']];
+            // Verify file integrity
+            $this->logMessage("Verifying file integrity...");
+            $integrityResult = $this->verifyFileIntegrity($downloadResult['filepath'], $downloadInfo['checksum']);
+            
+            if (!$integrityResult['success']) {
+                $this->logMessage("File integrity check failed: " . $integrityResult['error']);
+                return ['success' => false, 'error' => $integrityResult['error']];
             }
 
-            $this->logMessage("Step 4 completed successfully - File integrity verified");
+            $this->logMessage("File integrity verified");
 
-            // Step 5: Extract files
-            $this->logMessage("Step 5 - Extracting files");
+            // Extract files
+            $this->logMessage("Extracting application files...");
             $extractResult = $this->extractFiles($downloadResult['filepath']);
+            
             if (!$extractResult['success']) {
-                $this->logMessage("Step 5 failed - {$extractResult['error']}");
+                $this->logMessage("Extraction failed: " . $extractResult['error']);
                 return ['success' => false, 'error' => $extractResult['error']];
             }
 
-            $this->logMessage("Step 5 completed successfully - Files extracted to: {$extractResult['extracted_to']}");
+            $this->logMessage("Application files extracted successfully");
+            $this->logMessage("Download and extraction completed successfully");
 
-            // Step 6: Install composer dependencies
-            $this->logMessage("Step 6 - Installing Composer dependencies");
-            $composerResult = $this->installComposerDependencies($extractResult['extracted_to']);
-            if (!$composerResult['success']) {
-                $this->logMessage("Step 6 failed - {$composerResult['error']}");
-                return ['success' => false, 'error' => $composerResult['error']];
-            }
-
-            $this->logMessage("Step 6 completed successfully - Composer dependencies installed");
-
-            // Step 7: Generate application key
-            $this->logMessage("Step 7 - Generating application key");
-            $keyResult = $this->generateApplicationKey($extractResult['extracted_to']);
-            if (!$keyResult['success']) {
-                $this->logMessage("Step 7 failed - {$keyResult['error']}");
-                return ['success' => false, 'error' => $keyResult['error']];
-            }
-
-            $this->logMessage("Step 7 completed successfully - Application key generated");
-
-            // Step 8: Clean up
-            $this->logMessage("Step 8 - Cleaning up temporary files");
-            $this->cleanup($downloadResult['filepath']);
-            $this->logMessage("Step 8 completed successfully - Cleanup finished");
-
-            $this->logMessage("Application download and installation completed successfully for app ID: {$this->appId}, version: {$downloadInfo['version']}");
+            // Clean up temporary file
+            unlink($downloadResult['filepath']);
+            
+            $this->logMessage("Application download completed successfully for app ID: {$this->appId}, version: {$downloadInfo['version']}");
             
             return [
                 'success' => true,
-                'message' => 'Application downloaded and installed successfully',
-                'version' => $downloadInfo['version']
+                'version' => $downloadInfo['version'],
+                'message' => 'Application downloaded and extracted successfully'
             ];
 
         } catch (Exception $e) {
             $this->logMessage("Critical error in download process - " . $e->getMessage());
             $this->logMessage("Exception details - File: {$e->getFile()}, Line: {$e->getLine()}");
-            return [
-                'success' => false,
-                'error' => 'Download failed: ' . $e->getMessage()
-            ];
+            return ['success' => false, 'error' => 'Download failed: ' . $e->getMessage()];
         }
     }
 

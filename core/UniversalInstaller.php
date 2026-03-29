@@ -384,6 +384,55 @@ class UniversalInstaller
         include $this->basePath . 'views/step4-install.php';
     }
 
+    private function verifyApplicationDownload()
+    {
+        $criticalFiles = [
+            'artisan',
+            'composer.json',
+            'app/',
+            'bootstrap/',
+            'config/',
+            'database/',
+            'public/',
+            'resources/',
+            'routes/',
+            'storage/'
+        ];
+        
+        $missingFiles = [];
+        
+        foreach ($criticalFiles as $file) {
+            $path = $this->basePath . $file;
+            if (!file_exists($path)) {
+                $missingFiles[] = $file;
+            }
+        }
+        
+        if (!empty($missingFiles)) {
+            return [
+                'success' => false,
+                'error' => 'Application download is incomplete. Missing critical files: ' . implode(', ', $missingFiles) . '. Please try downloading again.'
+            ];
+        }
+        
+        // Additional check: ensure artisan is readable and executable
+        $artisanFile = $this->basePath . 'artisan';
+        if (file_exists($artisanFile)) {
+            if (!is_readable($artisanFile)) {
+                return [
+                    'success' => false,
+                    'error' => 'Artisan file is not readable. Please check file permissions.'
+                ];
+            }
+            
+            if (!is_executable($artisanFile)) {
+                chmod($artisanFile, 0755);
+            }
+        }
+        
+        return ['success' => true, 'message' => 'Application download verified successfully'];
+    }
+
     public function performInstallation($data)
     {
         try {
@@ -395,9 +444,23 @@ class UniversalInstaller
                 if ($result['success']) {
                     $_SESSION['app_downloaded'] = true;
                     $_SESSION['app_version'] = $result['version'];
+                    
+                    // Verify the download was successful by checking critical files
+                    $verificationResult = $this->verifyApplicationDownload();
+                    if (!$verificationResult['success']) {
+                        $_SESSION['download_error'] = $verificationResult['error'];
+                        return ['success' => false, 'error' => $verificationResult['error']];
+                    }
                 } else {
                     $_SESSION['download_error'] = $result['error'];
                     return ['success' => false, 'error' => $result['error']];
+                }
+            } else {
+                // Even if already downloaded, verify it's still valid
+                $verificationResult = $this->verifyApplicationDownload();
+                if (!$verificationResult['success']) {
+                    $_SESSION['download_error'] = $verificationResult['error'];
+                    return ['success' => false, 'error' => $verificationResult['error']];
                 }
             }
 
