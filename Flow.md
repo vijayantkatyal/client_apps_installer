@@ -9,11 +9,11 @@
 installer
 - file / folder permissions issue
 - curl issue (on installer)
-- composer issue (on installer)
-- php rewrite module issue
 
-- APP_URL (full url)
-- ASSET_URL (full url)
+✅ APP_URL (full url)
+✅ ASSET_URL (full url)
+✅ delete install files
+✅ migration issue
 
 redirect to: route: /index.php/login
 default email, password show to user after installation
