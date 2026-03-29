@@ -83,6 +83,7 @@ class RemoteDownloader
 
             // Extract files
             $this->logMessage("Extracting application files...");
+            $this->logMessage("Extraction path: " . $this->basePath);
             $extractResult = $this->extractFiles($downloadResult['filepath']);
             
             if (!$extractResult['success']) {
@@ -91,6 +92,16 @@ class RemoteDownloader
             }
 
             $this->logMessage("Application files extracted successfully");
+            $this->logMessage("Extraction path: " . $extractResult['extracted_to']);
+            
+            // Verify files were actually extracted
+            $this->logMessage("Verifying extracted files...");
+            $criticalFiles = ['artisan', 'composer.json'];
+            foreach ($criticalFiles as $file) {
+                $filePath = $extractResult['extracted_to'] . '/' . $file;
+                $this->logMessage("Checking file: $filePath - " . (file_exists($filePath) ? "EXISTS" : "MISSING"));
+            }
+
             $this->logMessage("Download and extraction completed successfully");
 
             // Clean up temporary file
@@ -480,7 +491,13 @@ class RemoteDownloader
     {
         $timestamp = date('Y-m-d H:i:s');
         $logEntry = "[{$timestamp}] RemoteDownloader: {$message}" . PHP_EOL;
-        file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
+        
+        // Output for real-time feedback
+        echo $logEntry;
+        
+        // Write to installation log
+        $logFile = dirname(__DIR__) . '/storage/install.log';
+        file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
     }
 
     private function cleanup($zipFile)
