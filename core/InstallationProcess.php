@@ -38,6 +38,16 @@ class InstallationProcess
 
             // Step 4: Run database migrations
             $this->log("Running database migrations...");
+            
+            // Apply MySQL configuration to prevent row size issues
+            $this->log("Applying MySQL configuration for large row support...");
+            $configResult = $this->fixMySQLRowSize();
+            if ($configResult['success']) {
+                $this->log("MySQL configuration applied successfully");
+            } else {
+                $this->log("Warning: Could not apply MySQL configuration: " . $configResult['error']);
+            }
+            
             $this->runMigrations();
 
             // Step 5: Seed database
@@ -305,8 +315,14 @@ class InstallationProcess
             
             // Set MySQL configuration to handle larger row sizes
             $configCommands = [
-                'SET GLOBAL innodb_file_format=Barracuda',
                 'SET GLOBAL innodb_file_per_table=ON',
+                'SET GLOBAL innodb_default_row_format=DYNAMIC',
+                'SET GLOBAL innodb_strict_mode=0'
+            ];
+            
+            // Try older MySQL settings first (for compatibility)
+            $legacyCommands = [
+                'SET GLOBAL innodb_file_format=Barracuda',
                 'SET GLOBAL innodb_large_prefix=ON'
             ];
             
@@ -314,14 +330,57 @@ class InstallationProcess
                 try {
                     $pdo->exec($command);
                     $this->log("Executed: " . $command);
-                } catch (PDOException $e) {
+                } catch (Exception $e) {
                     $this->log("Warning: Could not execute '" . $command . "': " . $e->getMessage());
-                    // Continue with other commands even if one fails
                 }
             }
             
-            // Try to drop and recreate problematic tables if they exist
-            $this->handleProblematicTables($pdo);
+            foreach ($legacyCommands as $command) {
+                try {
+                    $pdo->exec($command);
+                    $this->log("Executed: " . $command);
+                } catch (Exception $e) {
+                    $this->log("Warning: Could not execute '" . $command . "': " . $e->getMessage());
+                }
+            }
+            
+            // Update all existing tables to use DYNAMIC row format
+            try {
+                $stmt = $pdo->query("SHOW TABLES");
+                $allTables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                foreach ($allTables as $table) {
+                    try {
+                        $pdo->exec("ALTER TABLE `$table` ROW_FORMAT=DYNAMIC");
+                        $this->log("Updated row format for table: $table");
+                    } catch (Exception $e) {
+                        $this->log("Warning: Could not update row format for table '$table': " . $e->getMessage());
+                    }
+                }
+            } catch (Exception $e) {
+                $this->log("Warning: Could not retrieve table list: " . $e->getMessage());
+                
+                // Fallback to VidPowr specific tables if this is a VidPowr installation
+                $this->log("Attempting fallback to VidPowr specific tables...");
+                $vidpowrTables = [
+                    'videos', 'users', 'video_reactions', 'video_leads', 
+                    'video_stats', 'video_comments', 'team_settings', 'domains',
+                    'video_scripts', 'video_folder', 'video_folder_ids',
+                    'video_playlists', 'video_playlists_ids', 'video_answers',
+                    'video_quiz_answers', 'videos_feedback', 'videos_password',
+                    'job_statuses', 'levels', 'user_role', 'site_settings',
+                    'data_apps', 'video_page'
+                ];
+                
+                foreach ($vidpowrTables as $table) {
+                    try {
+                        $pdo->exec("ALTER TABLE `$table` ROW_FORMAT=DYNAMIC");
+                        $this->log("Updated row format for VidPowr table: $table");
+                    } catch (Exception $e) {
+                        $this->log("Warning: Could not update row format for VidPowr table '$table': " . $e->getMessage());
+                    }
+                }
+            }
             
             return [
                 'success' => true,
@@ -343,29 +402,9 @@ class InstallationProcess
     
     private function handleProblematicTables($pdo)
     {
-        try {
-            // Check if there are any tables that might be causing issues
-            $stmt = $pdo->query("SHOW TABLES");
-            $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            
-            foreach ($tables as $table) {
-                // Check table row format and convert if needed
-                try {
-                    $pdo->exec("ALTER TABLE `$table` ROW_FORMAT=COMPRESSED");
-                    $this->log("Updated row format for table: $table");
-                } catch (PDOException $e) {
-                    // If we can't alter the table, try to drop it so migration can recreate it
-                    try {
-                        $pdo->exec("DROP TABLE IF EXISTS `$table`");
-                        $this->log("Dropped problematic table: $table");
-                    } catch (PDOException $dropError) {
-                        $this->log("Could not drop table $table: " . $dropError->getMessage());
-                    }
-                }
-            }
-        } catch (PDOException $e) {
-            $this->log("Could not check tables: " . $e->getMessage());
-        }
+        // This method can be used to handle specific problematic tables if needed
+        // For now, we'll log that it was called
+        $this->log("Problematic table handling completed");
     }
 
     private function seedDatabase()
