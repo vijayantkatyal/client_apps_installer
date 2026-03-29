@@ -499,6 +499,11 @@ class UniversalInstaller
                 
                 file_put_contents($this->basePath . 'storage/install.lock', json_encode($installInfo));
                 
+                // Clean output buffer before redirect
+                if (ob_get_level()) {
+                    ob_end_clean();
+                }
+                
                 header('Location: install.php?step=complete');
                 exit;
             } else {

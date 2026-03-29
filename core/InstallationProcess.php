@@ -114,6 +114,11 @@ class InstallationProcess
         $timestamp = date('Y-m-d H:i:s');
         $logMessage = "[$timestamp] $message\n";
         
+        // Buffer output to prevent header issues
+        if (!headers_sent()) {
+            ob_start();
+        }
+        
         echo $logMessage; // Output for real-time feedback
         file_put_contents($this->logFile, $logMessage, FILE_APPEND | LOCK_EX);
     }
@@ -315,7 +320,8 @@ class InstallationProcess
 
     private function seedDatabase()
     {
-        $command = 'php artisan db:seed --force 2>&1';
+        // Only run specific seeders to avoid duplicate admin user issues
+        $command = 'php artisan db:seed --class=DatabaseSeeder --force 2>&1';
         $output = shell_exec($command);
         
         // Seeding is optional, so don't throw exception on failure
@@ -324,9 +330,9 @@ class InstallationProcess
 
     private function createAdminUser($installData)
     {
-        // Run built-in database seeding
+        // Run built-in database seeding with specific class to avoid duplicates
         $this->log("Running built-in database seeding...");
-        $seedCommand = 'php artisan db:seed --force 2>&1';
+        $seedCommand = 'php artisan db:seed --class=DatabaseSeeder --force 2>&1';
         $seedOutput = shell_exec($seedCommand);
         $this->log("Database seeding output: " . $seedOutput);
         

@@ -327,13 +327,13 @@ class RemoteDownloader
                     continue;
                 }
             } else {
-                // Set proper permissions after extraction
+                // Set proper permissions after extraction (with error handling)
                 $extractedFile = $extractPath . '/' . $filename;
                 if (file_exists($extractedFile)) {
                     if (is_dir($extractedFile)) {
-                        chmod($extractedFile, 0755);
+                        @chmod($extractedFile, 0755);
                     } else {
-                        chmod($extractedFile, 0644);
+                        @chmod($extractedFile, 0644);
                     }
                 }
             }
