@@ -432,18 +432,35 @@ class UniversalInstaller
         
         return ['success' => true, 'message' => 'Application download verified successfully'];
     }
+    
+    private function logInstallation($message)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[$timestamp] $message\n";
+        
+        // Output for real-time feedback
+        echo $logMessage;
+        
+        // Write to installation log
+        $logFile = $this->basePath . 'storage/install.log';
+        file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+    }
 
     public function performInstallation($data)
     {
         try {
             // First, download the application if not already downloaded
             if (!isset($_SESSION['app_downloaded'])) {
+                // Log to installation log that download is starting
+                $this->logInstallation("Starting application download...");
+                
                 $downloader = new RemoteDownloader($_SESSION['license_key'], $_SESSION['selected_app'], $this->serversConfig, $this->basePath);
                 $result = $downloader->downloadApplication();
 
                 if ($result['success']) {
                     $_SESSION['app_downloaded'] = true;
                     $_SESSION['app_version'] = $result['version'];
+                    $this->logInstallation("Application download completed successfully");
                     
                     // Verify the download was successful by checking critical files
                     $verificationResult = $this->verifyApplicationDownload();
@@ -453,9 +470,11 @@ class UniversalInstaller
                     }
                 } else {
                     $_SESSION['download_error'] = $result['error'];
+                    $this->logInstallation("Application download failed: " . $result['error']);
                     return ['success' => false, 'error' => $result['error']];
                 }
             } else {
+                $this->logInstallation("Application already downloaded, verifying...");
                 // Even if already downloaded, verify it's still valid
                 $verificationResult = $this->verifyApplicationDownload();
                 if (!$verificationResult['success']) {

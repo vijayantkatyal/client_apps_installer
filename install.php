@@ -3,10 +3,21 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Define base path for includes
+$basePath = __DIR__ . '/';
+
+// Load installer classes first
+require_once __DIR__ . '/core/UniversalInstaller.php';
+require_once __DIR__ . '/core/RemoteDownloader.php';
+require_once __DIR__ . '/core/AppUpdater.php';
+require_once __DIR__ . '/core/SystemCheck.php';
+require_once __DIR__ . '/core/LicenseValidator.php';
+require_once __DIR__ . '/core/DatabaseSetup.php';
+require_once __DIR__ . '/core/InstallationProcess.php';
+
 // Check if already installed
 if (file_exists('storage/install.lock')) {
     // Check for updates
-    include 'core/UniversalInstaller.php';
     $installer = new UniversalInstaller();
     $updateCheck = $installer->checkForUpdates();
     
@@ -18,18 +29,6 @@ if (file_exists('storage/install.lock')) {
     }
     exit;
 }
-
-// Define base path for includes
-$basePath = __DIR__ . '/';
-
-// Load installer classes
-require_once __DIR__ . '/core/UniversalInstaller.php';
-require_once __DIR__ . '/core/RemoteDownloader.php';
-require_once __DIR__ . '/core/AppUpdater.php';
-require_once __DIR__ . '/core/SystemCheck.php';
-require_once __DIR__ . '/core/LicenseValidator.php';
-require_once __DIR__ . '/core/DatabaseSetup.php';
-require_once __DIR__ . '/core/InstallationProcess.php';
 
 $installer = new UniversalInstaller();
 $step = $_GET['step'] ?? 'license';
