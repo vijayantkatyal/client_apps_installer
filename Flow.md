@@ -17,3 +17,7 @@ installer
 
 redirect to: route: /index.php/login
 default email, password show to user after installation
+
+- agency / standard mode
+- encrypted file
+- update expiration every few weeks (ping license server)

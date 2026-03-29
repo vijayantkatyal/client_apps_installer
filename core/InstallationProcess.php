@@ -130,7 +130,136 @@ class InstallationProcess
         $output = shell_exec($command);
         
         if (strpos($output, 'Migration') === false && strpos($output, 'Nothing to migrate') === false) {
+            // Check if it's a row size error
+            if (strpos($output, 'Row size too large') !== false || strpos($output, '1118') !== false) {
+                $this->log("Row size error detected, attempting to fix MySQL configuration...");
+                
+                // Try to fix by setting MySQL configuration
+                $fixResult = $this->fixMySQLRowSize();
+                if ($fixResult['success']) {
+                    $this->log("MySQL configuration updated, retrying migrations...");
+                    $retryOutput = shell_exec($command);
+                    
+                    if (strpos($retryOutput, 'Migration') !== false || strpos($retryOutput, 'Nothing to migrate') !== false) {
+                        $this->log("Migrations completed successfully after configuration fix");
+                        return;
+                    } else {
+                        throw new Exception('Database migration failed even after configuration fix: ' . $retryOutput);
+                    }
+                } else {
+                    throw new Exception('Database migration failed due to row size issue and could not fix configuration: ' . $fixResult['error'] . '. Original error: ' . $output);
+                }
+            }
+            
             throw new Exception('Database migration failed: ' . $output);
+        }
+    }
+
+    private function fixMySQLRowSize()
+    {
+        try {
+            // Read database configuration from .env file
+            $envFile = $this->basePath . '.env';
+            if (!file_exists($envFile)) {
+                return [
+                    'success' => false,
+                    'error' => 'Environment file not found'
+                ];
+            }
+            
+            $envContent = file_get_contents($envFile);
+            $dbConfig = [];
+            
+            // Parse database configuration from .env
+            preg_match('/DB_HOST=(.+)/', $envContent, $host);
+            preg_match('/DB_PORT=(.+)/', $envContent, $port);
+            preg_match('/DB_DATABASE=(.+)/', $envContent, $database);
+            preg_match('/DB_USERNAME=(.+)/', $envContent, $username);
+            preg_match('/DB_PASSWORD=(.+)/', $envContent, $password);
+            
+            if (!$host || !$database || !$username) {
+                return [
+                    'success' => false,
+                    'error' => 'Could not parse database configuration from .env'
+                ];
+            }
+            
+            $dbConfig = [
+                'host' => trim($host[1]),
+                'port' => trim($port[1] ?? '3306'),
+                'database' => trim($database[1]),
+                'username' => trim($username[1]),
+                'password' => trim($password[1] ?? '')
+            ];
+            
+            // Connect to MySQL and set configuration
+            $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}";
+            $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+            
+            // Set MySQL configuration to handle larger row sizes
+            $configCommands = [
+                'SET GLOBAL innodb_file_format=Barracuda',
+                'SET GLOBAL innodb_file_per_table=ON',
+                'SET GLOBAL innodb_large_prefix=ON'
+            ];
+            
+            foreach ($configCommands as $command) {
+                try {
+                    $pdo->exec($command);
+                    $this->log("Executed: " . $command);
+                } catch (PDOException $e) {
+                    $this->log("Warning: Could not execute '" . $command . "': " . $e->getMessage());
+                    // Continue with other commands even if one fails
+                }
+            }
+            
+            // Try to drop and recreate problematic tables if they exist
+            $this->handleProblematicTables($pdo);
+            
+            return [
+                'success' => true,
+                'message' => 'MySQL configuration updated successfully'
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'error' => 'Failed to update MySQL configuration: ' . $e->getMessage()
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'Unexpected error: ' . $e->getMessage()
+            ];
+        }
+    }
+    
+    private function handleProblematicTables($pdo)
+    {
+        try {
+            // Check if there are any tables that might be causing issues
+            $stmt = $pdo->query("SHOW TABLES");
+            $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($tables as $table) {
+                // Check table row format and convert if needed
+                try {
+                    $pdo->exec("ALTER TABLE `$table` ROW_FORMAT=COMPRESSED");
+                    $this->log("Updated row format for table: $table");
+                } catch (PDOException $e) {
+                    // If we can't alter the table, try to drop it so migration can recreate it
+                    try {
+                        $pdo->exec("DROP TABLE IF EXISTS `$table`");
+                        $this->log("Dropped problematic table: $table");
+                    } catch (PDOException $dropError) {
+                        $this->log("Could not drop table $table: " . $dropError->getMessage());
+                    }
+                }
+            }
+        } catch (PDOException $e) {
+            $this->log("Could not check tables: " . $e->getMessage());
         }
     }
 
