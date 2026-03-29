@@ -330,10 +330,20 @@ class RemoteDownloader
                 
                 if ($isCritical) {
                     $this->logMessage("Failed to extract critical file: $filename");
-                    return ['success' => false, 'error' => "Failed to extract critical file: $filename"];
+                    return ['success' => false, 'error' => "Failed to extract critical file: $filename. Check file permissions and disk space."];
                 } else {
                     $this->logMessage("Warning: Failed to extract non-critical file: $filename (continuing)");
                     continue;
+                }
+            } else {
+                // Set proper permissions after extraction
+                $extractedFile = $extractPath . '/' . $filename;
+                if (file_exists($extractedFile)) {
+                    if (is_dir($extractedFile)) {
+                        chmod($extractedFile, 0755);
+                    } else {
+                        chmod($extractedFile, 0644);
+                    }
                 }
             }
         }
@@ -508,13 +518,15 @@ class RemoteDownloader
             'install.php',
             'Installer.php',
             'core/',
-            'views/',
             'assets/',
             'config/',
             'docker-compose.yml',
             'Dockerfile',
             '.dockerignore'
         ];
+        
+        // Views are needed for the installer to function, so don't move them
+        // They will be cleaned up separately after successful installation
 
         foreach ($installerFiles as $file) {
             $source = $baseDir . '/' . $file;
@@ -544,6 +556,42 @@ class RemoteDownloader
         
         $this->logMessage("Installer files backed up to: " . $backupDir);
         $this->logMessage("Original installer files removed successfully");
+    }
+    
+    public function cleanupInstallerFiles()
+    {
+        $baseDir = dirname(__DIR__);
+        
+        // Clean up views directory after installation is complete
+        $viewsDir = $baseDir . '/views';
+        if (is_dir($viewsDir)) {
+            try {
+                $this->removeDirectory($viewsDir);
+                $this->logMessage("Cleaned up views directory");
+            } catch (Exception $e) {
+                $this->logMessage("Warning: Could not clean up views directory: " . $e->getMessage());
+            }
+        }
+        
+        // Clean up any remaining installer files
+        $remainingFiles = [
+            'install.php',
+            'Installer.php'
+        ];
+        
+        foreach ($remainingFiles as $file) {
+            $filePath = $baseDir . '/' . $file;
+            if (file_exists($filePath)) {
+                try {
+                    unlink($filePath);
+                    $this->logMessage("Cleaned up: " . $file);
+                } catch (Exception $e) {
+                    $this->logMessage("Warning: Could not clean up " . $file . ": " . $e->getMessage());
+                }
+            }
+        }
+        
+        $this->logMessage("Installer cleanup completed");
     }
 
     private function copyDirectory($source, $destination)

@@ -243,7 +243,18 @@ class UniversalInstaller
         // Clear the error after displaying it
         unset($_SESSION['license_error']);
         
-        include $this->basePath . 'views/license_validation.php';
+        $viewFile = $this->basePath . 'views/license_validation.php';
+        if (!file_exists($viewFile)) {
+            // Fallback to a simple error page if view is missing
+            echo "<h1>License Validation</h1>";
+            echo "<p>View file not found. Please check installation files.</p>";
+            if ($licenseError) {
+                echo "<p style='color: red;'>Error: " . htmlspecialchars($licenseError) . "</p>";
+            }
+            return;
+        }
+        
+        include $viewFile;
     }
 
     public function validateLicense($licenseKey)

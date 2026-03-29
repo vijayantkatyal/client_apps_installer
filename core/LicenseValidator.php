@@ -12,7 +12,10 @@ class LicenseValidator
         
         // Create storage directory if it doesn't exist
         if (!is_dir($storageDir)) {
-            mkdir($storageDir, 0755, true);
+            if (!mkdir($storageDir, 0755, true)) {
+                error_log("Failed to create license storage directory: $storageDir");
+                // Continue anyway, might be created later
+            }
         }
         
         $this->licenseFile = $storageDir . '/license.json';

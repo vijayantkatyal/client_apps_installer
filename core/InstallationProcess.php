@@ -16,6 +16,9 @@ class InstallationProcess
         $this->log("Starting installation...");
         
         try {
+            // Pre-installation checks and directory creation
+            $this->ensureRequiredDirectories();
+            
             // Step 1: Write environment file
             $this->log("Creating environment file...");
             $database = new DatabaseSetup();
@@ -61,6 +64,10 @@ class InstallationProcess
             $this->log("Creating license configuration...");
             $this->createLicenseConfig($licenseData);
 
+            // Step 11: Clean up installer files
+            $this->log("Cleaning up installer files...");
+            $this->cleanupInstaller();
+
             $this->log("Installation completed successfully!");
             
             return [
@@ -75,6 +82,30 @@ class InstallationProcess
                 'success' => false,
                 'error' => $e->getMessage()
             ];
+        }
+    }
+    
+    private function ensureRequiredDirectories()
+    {
+        $requiredDirs = [
+            'bootstrap/cache',
+            'storage/framework/cache',
+            'storage/framework/sessions',
+            'storage/framework/views',
+            'storage/logs',
+            'storage/app/public',
+            'config'
+        ];
+        
+        foreach ($requiredDirs as $dir) {
+            $fullPath = $this->basePath . $dir;
+            if (!is_dir($fullPath)) {
+                if (!mkdir($fullPath, 0755, true)) {
+                    $this->log("Warning: Could not create directory: $dir");
+                } else {
+                    $this->log("Created directory: $dir");
+                }
+            }
         }
     }
 
@@ -116,6 +147,14 @@ class InstallationProcess
 
     private function generateAppKey()
     {
+        // Ensure bootstrap/cache directory exists
+        $bootstrapCacheDir = $this->basePath . 'bootstrap/cache';
+        if (!is_dir($bootstrapCacheDir)) {
+            if (!mkdir($bootstrapCacheDir, 0755, true)) {
+                $this->log("Warning: Could not create bootstrap/cache directory");
+            }
+        }
+        
         $command = 'php artisan key:generate --force 2>&1';
         $output = shell_exec($command);
         
@@ -358,6 +397,17 @@ class InstallationProcess
         $lines = explode("\n", trim($logs));
         
         return array_filter($lines);
+    }
+
+    private function cleanupInstaller()
+    {
+        try {
+            require_once $this->basePath . 'core/RemoteDownloader.php';
+            $downloader = new RemoteDownloader('', '', [], $this->basePath);
+            $downloader->cleanupInstallerFiles();
+        } catch (Exception $e) {
+            $this->log("Warning: Could not clean up installer files: " . $e->getMessage());
+        }
     }
 
     public function clearInstallation()
