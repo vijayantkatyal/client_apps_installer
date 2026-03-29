@@ -533,6 +533,11 @@ class UniversalInstaller
             include $completeView;
         } else {
             // Fallback content if view was cleaned up
+            $appUrl = 'http://' . $_SERVER['HTTP_HOST'];
+            if ($app && isset($app['url'])) {
+                $appUrl = $app['url'];
+            }
+            
             echo '<!DOCTYPE html>
 <html>
 <head>
@@ -541,7 +546,7 @@ class UniversalInstaller
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
         .success { color: #28a745; text-align: center; }
         .alert { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 5px; }
     </style>
 </head>
 <body>
@@ -552,8 +557,8 @@ class UniversalInstaller
     
     <div class="alert">
         <h3>Next Steps:</h3>
-        <p><a href="' . $app['url'] . '/admin" class="btn">Go to Admin Panel</a></p>
-        <p><a href="' . $app['url'] . '" class="btn">Visit Your Site</a></p>
+        <p><a href="' . $appUrl . '/admin" class="btn">Go to Admin Panel</a></p>
+        <p><a href="' . $appUrl . '" class="btn">Visit Your Site</a></p>
         <p><strong>Important:</strong> Delete install.php for security.</p>
     </div>
 </body>

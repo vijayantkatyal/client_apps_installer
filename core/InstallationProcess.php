@@ -187,6 +187,55 @@ class InstallationProcess
         // Log the actual output for debugging
         $this->log("Migration output: " . $output);
         
+        // Check for error indicators first
+        $errorIndicators = [
+            'SQLSTATE[42000]',
+            'Row size too large',
+            '1118',
+            'Syntax error',
+            'Access violation',
+            'QueryException'
+        ];
+        
+        foreach ($errorIndicators as $error) {
+            if (strpos($output, $error) !== false) {
+                $this->log("Migration error detected: " . $error);
+                
+                // Check if it's a row size error specifically
+                if (strpos($output, 'Row size too large') !== false || strpos($output, '1118') !== false) {
+                    $this->log("Row size error detected, attempting to fix MySQL configuration...");
+                    
+                    // Try to fix by setting MySQL configuration
+                    $fixResult = $this->fixMySQLRowSize();
+                    if ($fixResult['success']) {
+                        $this->log("MySQL configuration updated, retrying migrations...");
+                        $retryOutput = shell_exec($command);
+                        $this->log("Retry migration output: " . $retryOutput);
+                        
+                        // Check retry output for errors
+                        $retryHasErrors = false;
+                        foreach ($errorIndicators as $error) {
+                            if (strpos($retryOutput, $error) !== false) {
+                                $retryHasErrors = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$retryHasErrors) {
+                            $this->log("Migrations completed successfully after configuration fix");
+                            return;
+                        } else {
+                            throw new Exception('Database migration failed even after configuration fix: ' . $retryOutput);
+                        }
+                    } else {
+                        throw new Exception('Database migration failed due to row size issue and could not fix configuration: ' . $fixResult['error'] . '. Original error: ' . $output);
+                    }
+                } else {
+                    throw new Exception('Database migration failed: ' . $output);
+                }
+            }
+        }
+        
         // Check for successful migration indicators
         $successIndicators = [
             'Migration',
@@ -205,38 +254,7 @@ class InstallationProcess
         }
         
         if (!$migrationSuccessful) {
-            // Check if it's a row size error
-            if (strpos($output, 'Row size too large') !== false || strpos($output, '1118') !== false) {
-                $this->log("Row size error detected, attempting to fix MySQL configuration...");
-                
-                // Try to fix by setting MySQL configuration
-                $fixResult = $this->fixMySQLRowSize();
-                if ($fixResult['success']) {
-                    $this->log("MySQL configuration updated, retrying migrations...");
-                    $retryOutput = shell_exec($command);
-                    $this->log("Retry migration output: " . $retryOutput);
-                    
-                    // Check retry output
-                    $retrySuccessful = false;
-                    foreach ($successIndicators as $indicator) {
-                        if (strpos($retryOutput, $indicator) !== false) {
-                            $retrySuccessful = true;
-                            break;
-                        }
-                    }
-                    
-                    if ($retrySuccessful) {
-                        $this->log("Migrations completed successfully after configuration fix");
-                        return;
-                    } else {
-                        throw new Exception('Database migration failed even after configuration fix: ' . $retryOutput);
-                    }
-                } else {
-                    throw new Exception('Database migration failed due to row size issue and could not fix configuration: ' . $fixResult['error'] . '. Original error: ' . $output);
-                }
-            }
-            
-            throw new Exception('Database migration failed: ' . $output);
+            throw new Exception('Database migration failed - unable to determine success: ' . $output);
         }
         
         $this->log("Database migrations completed successfully");
