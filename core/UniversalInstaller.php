@@ -527,7 +527,38 @@ class UniversalInstaller
         $installInfo = json_decode(file_get_contents($this->basePath . 'storage/install.lock'), true);
         $app = $this->appsConfig[$installInfo['app']] ?? null;
         
-        include $this->basePath . 'views/complete.php';
+        // Check if complete.php exists before including
+        $completeView = $this->basePath . 'views/complete.php';
+        if (file_exists($completeView)) {
+            include $completeView;
+        } else {
+            // Fallback content if view was cleaned up
+            echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Installation Complete</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .success { color: #28a745; text-align: center; }
+        .alert { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="success">
+        <h1>🎉 Installation Complete!</h1>
+        <p>Your VidPowr application has been successfully installed.</p>
+    </div>
+    
+    <div class="alert">
+        <h3>Next Steps:</h3>
+        <p><a href="' . $app['url'] . '/admin" class="btn">Go to Admin Panel</a></p>
+        <p><a href="' . $app['url'] . '" class="btn">Visit Your Site</a></p>
+        <p><strong>Important:</strong> Delete install.php for security.</p>
+    </div>
+</body>
+</html>';
+        }
     }
 
     public function checkForUpdates()

@@ -184,7 +184,27 @@ class InstallationProcess
         $command = 'php artisan migrate --force 2>&1';
         $output = shell_exec($command);
         
-        if (strpos($output, 'Migration') === false && strpos($output, 'Nothing to migrate') === false) {
+        // Log the actual output for debugging
+        $this->log("Migration output: " . $output);
+        
+        // Check for successful migration indicators
+        $successIndicators = [
+            'Migration',
+            'Nothing to migrate',
+            'already been migrated',
+            'Migrated',
+            'Migration completed'
+        ];
+        
+        $migrationSuccessful = false;
+        foreach ($successIndicators as $indicator) {
+            if (strpos($output, $indicator) !== false) {
+                $migrationSuccessful = true;
+                break;
+            }
+        }
+        
+        if (!$migrationSuccessful) {
             // Check if it's a row size error
             if (strpos($output, 'Row size too large') !== false || strpos($output, '1118') !== false) {
                 $this->log("Row size error detected, attempting to fix MySQL configuration...");
@@ -194,8 +214,18 @@ class InstallationProcess
                 if ($fixResult['success']) {
                     $this->log("MySQL configuration updated, retrying migrations...");
                     $retryOutput = shell_exec($command);
+                    $this->log("Retry migration output: " . $retryOutput);
                     
-                    if (strpos($retryOutput, 'Migration') !== false || strpos($retryOutput, 'Nothing to migrate') !== false) {
+                    // Check retry output
+                    $retrySuccessful = false;
+                    foreach ($successIndicators as $indicator) {
+                        if (strpos($retryOutput, $indicator) !== false) {
+                            $retrySuccessful = true;
+                            break;
+                        }
+                    }
+                    
+                    if ($retrySuccessful) {
                         $this->log("Migrations completed successfully after configuration fix");
                         return;
                     } else {
@@ -208,6 +238,8 @@ class InstallationProcess
             
             throw new Exception('Database migration failed: ' . $output);
         }
+        
+        $this->log("Database migrations completed successfully");
     }
 
     private function fixMySQLRowSize()
